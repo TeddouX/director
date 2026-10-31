@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "teddy.director.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "EntityModelMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
