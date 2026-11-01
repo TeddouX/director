@@ -19,6 +19,7 @@ public class DummyEntity extends Entity {
 
     public DummyEntity(EntityType<DummyEntity> type, Level level) {
         super(type, level);
+        this.animationState = new DummyEntityAnimationState();
     }
 
     public EntityType<?> getDisplayEntity() {

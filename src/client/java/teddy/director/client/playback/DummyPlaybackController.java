@@ -1,26 +1,36 @@
 package teddy.director.client.playback;
 
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.Entity;
 import teddy.director.client.data.TimelineData;
 import teddy.director.client.data.keyframe.ModelPartKeyframe;
 import teddy.director.client.entity.DummyEntity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class DummyPlaybackController {
-    public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
+    public Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
+    private final ClientLevel level;
 
-    public static void addDummyEntity(DummyEntity entity) {
+    public DummyPlaybackController(ClientLevel level) {
+        this.level = level;
+    }
+
+    public void addDummyEntity(DummyEntity entity) {
         dummyEntities.put(entity.data.uuid, entity);
     }
 
-    public static void removeDummyEntity(UUID uuid) {
+    public void removeDummyEntity(UUID uuid) {
         dummyEntities.remove(uuid);
     }
 
-    public static void update(int tick, TimelineData timeline) {
+    public void removeAllEntities() {
+        for (DummyEntity entity : dummyEntities.values()) {
+            level.removeEntity(entity.getId(), Entity.RemovalReason.DISCARDED);
+        }
+    }
+
+    public void update(int tick, TimelineData timeline) {
         if (timeline.controlledDummies.isEmpty())
             return;
 

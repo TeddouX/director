@@ -6,6 +6,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.playback.DummyPlaybackController;
+import teddy.director.client.playback.MoviePlaybackController;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,16 +29,13 @@ public class ModelPartKeyframe extends AbstractKeyframe {
     public void updateDummies(int currTick, List<UUID> entities, @NonNull ModelPartKeyframe next) {
         int dTick = next.tick - tick;
 
-        //
-        // TEMP
-        //
         float t = dTick == 0f ? 1f : (currTick - tick) / (float) dTick;
 
         Vec3 lerpedPos = position.lerp(next.position, t);
         Vec3 lerpedRot = rotation.lerp(next.rotation, t);
 
         for (UUID entityUUID : entities) {
-            DummyEntity entity = DummyPlaybackController.dummyEntities.get(entityUUID);
+            DummyEntity entity = MoviePlaybackController.dummyPlaybackController.dummyEntities.get(entityUUID);
             if (entity == null)
                 continue;
 

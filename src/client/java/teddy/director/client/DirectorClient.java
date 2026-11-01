@@ -16,17 +16,20 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
+import teddy.director.Director;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.DummyEntityRenderer;
 import teddy.director.client.playback.DummyPlaybackController;
+import teddy.director.client.playback.MoviePlaybackController;
 import teddy.director.client.screen.DirectorScreen;
 
 import java.util.UUID;
 
 public class DirectorClient implements ClientModInitializer {
-	private static boolean openTimelineScreen = true;
+	private static boolean openTimelineScreen = false;
 	private static int nextId = Integer.MIN_VALUE / 2;
 
 	public static int nextClientID() {
@@ -36,6 +39,7 @@ public class DirectorClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
         ClientEntities.registerAll();
+		DirectorKeybinds.registerKeyMappings();
 
 		registerEntityRenderers();
 		registerEventCallbacks();
@@ -49,7 +53,6 @@ public class DirectorClient implements ClientModInitializer {
 			if (!DirectorState.IS_ACTIVE)
 				return 0;
 
-			DirectorScreen.ACTIVE = true;
 			openTimelineScreen = true;
 
 			return 1;
@@ -62,9 +65,10 @@ public class DirectorClient implements ClientModInitializer {
 			}
 
 			ClientLevel level = ctx.getSource().getLevel();
+			Vec3 pos = ctx.getSource().getPosition();
 
 			DummyEntity entity = new DummyEntity(ClientEntities.DUMMY, level);
-			entity.setPos(ctx.getSource().getPosition());
+			entity.setPos(pos);
 			entity.setId(nextClientID());
 
 			DummyData data = new DummyData();
@@ -76,10 +80,12 @@ public class DirectorClient implements ClientModInitializer {
 			entity.displayEntityType = DirectorState.DEFAULT_DUMMY_ENTITY_TYPE;
 
 			DirectorState.CURRENT_MOVIE.dummies.add(data);
+			// TEMP
+			DirectorState.CURRENT_MOVIE.timelines.getFirst().controlledDummies.add(data.uuid);
 
 			level.addEntity(entity);
 
-			DummyPlaybackController.addDummyEntity(entity);
+			MoviePlaybackController.dummyPlaybackController.addDummyEntity(entity);
 
 			return 1;
 		}));
@@ -100,6 +106,9 @@ public class DirectorClient implements ClientModInitializer {
 				openTimelineScreen = false;
 				mc.gui.setScreen(new DirectorScreen(Component.empty()));
 			}
+
+			if (DirectorKeybinds.openDirectorUIKey.isDown() && !DirectorScreen.ACTIVE)
+				mc.gui.setScreen(new DirectorScreen(Component.empty()));
 		});
 	}
 

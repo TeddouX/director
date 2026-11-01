@@ -2,10 +2,13 @@ package teddy.director.client.data;
 
 import com.google.gson.*;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.io.FilenameUtils;
 import teddy.director.Director;
 import teddy.director.client.data.keyframe.AbstractKeyframe;
 import teddy.director.client.data.keyframe.KeyframeRegistry;
+import teddy.director.client.data.keyframe.ModelPartKeyframe;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +52,16 @@ public class MovieData {
     public MovieData(String name) {
         this.name = name;
         this.uuid = UUID.randomUUID();
+
+        // TEMP
+        TimelineData data = new TimelineData();
+        TimelineData.Track track = new TimelineData.Track();
+        track.type = "model_part";
+
+        track.keyframes.add(new ModelPartKeyframe(0, "right_leg", new Vec3(1, 1, 1), new Vec3(Mth.HALF_PI, 0, 0)));
+
+        data.tracks.add(track);
+        timelines.add(data);
     }
 
     private static Path saveDir() {
@@ -68,11 +81,10 @@ public class MovieData {
         Director.LOGGER.info("Saved movie \"{}\" to file:{}", data.name, saveFile.toAbsolutePath());
     }
 
-    public static void load(UUID uuid) throws IOException {
-
-    }
-
     public static List<MovieData> listAllSavedMovies(boolean reloadCache) {
+        if (!reloadCache && !MOVIES_CACHE.isEmpty())
+            return MOVIES_CACHE;
+
         List<MovieData> savedData = new ArrayList<>();
 
         File[] files = saveDir().toFile().listFiles((_, name) ->
@@ -81,9 +93,6 @@ public class MovieData {
 
         if (files == null)
             return savedData;
-
-        if (!reloadCache && !MOVIES_CACHE.isEmpty())
-            return MOVIES_CACHE;
 
         for (File file : files) {
             try (Reader reader = Files.newBufferedReader(file.toPath())){

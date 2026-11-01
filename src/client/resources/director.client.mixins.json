@@ -3,12 +3,15 @@
   "package": "teddy.director.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "EntityModelMixin"
+    "EntityModelMixin",
+    "LivingEntityRenderStateMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "mixins": [
+  ]
 }

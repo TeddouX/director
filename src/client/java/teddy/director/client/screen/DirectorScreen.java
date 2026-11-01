@@ -15,6 +15,7 @@ import org.lwjgl.glfw.GLFW;
 import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
+import teddy.director.client.playback.MoviePlaybackController;
 
 import java.io.IOException;
 
@@ -30,6 +31,8 @@ public class DirectorScreen extends Screen {
 
     public DirectorScreen(Component title) {
         super(title);
+
+        ACTIVE = true;
     }
 
     @Override
@@ -77,7 +80,7 @@ public class DirectorScreen extends Screen {
 
                         for (MovieData movie : MovieData.listAllSavedMovies(reloadCache)) {
                             if (ImGui.menuItem(movie.name)) {
-                                DirectorState.CURRENT_MOVIE = movie;
+                                MoviePlaybackController.loadMovieData(movie);
 
                                 Director.LOGGER.info("Loaded movie {}", movie.name);
                             }

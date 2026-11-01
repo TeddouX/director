@@ -6,7 +6,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import teddy.director.client.entity.rendering.DummyEntityRenderState;
+import teddy.director.client.access.DirectorLivingEntityStateAccess;
+import teddy.director.client.entity.rendering.DummyEntityAnimationState;
 import teddy.director.client.entity.rendering.ModelPartLookup;
 
 import java.util.Map;
@@ -15,10 +16,14 @@ import java.util.Map;
 public class EntityModelMixin<S> {
     @Inject(method = "setupAnim", at = @At("TAIL"))
     private void director$applyPartTransforms(S state, CallbackInfo ci) {
-        if (!(state instanceof DummyEntityRenderState renderState))
+        if (!(state instanceof DirectorLivingEntityStateAccess access))
             return;
 
-        var partTransforms = renderState.animState.partTransforms;
+        DummyEntityAnimationState animState = access.director$getAnimState();
+        if (animState == null)
+            return;
+
+        var partTransforms = animState.partTransforms;
         if (partTransforms == null)
             return;
 
