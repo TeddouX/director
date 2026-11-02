@@ -21,6 +21,10 @@ public class TimelineData {
         // Sorted by tick
         public List<AbstractKeyframe> keyframes = new ArrayList<>();
 
+        public Track(String name) {
+            this.name = name;
+        }
+
         /// @return The last keyframe index if no keyframes exist for the tick
         public int getKeyFrameIndex(int tick) {
             int keyframesSize = keyframes.size() - 1;

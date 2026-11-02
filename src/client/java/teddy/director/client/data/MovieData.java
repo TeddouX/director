@@ -52,16 +52,6 @@ public class MovieData {
     public MovieData(String name) {
         this.name = name;
         this.uuid = UUID.randomUUID();
-
-        // TEMP
-        TimelineData data = new TimelineData();
-        TimelineData.Track track = new TimelineData.Track();
-        track.type = "model_part";
-
-        track.keyframes.add(new ModelPartKeyframe(0, "right_leg", new Vec3(1, 1, 1), new Vec3(Mth.HALF_PI, 0, 0)));
-
-        data.tracks.add(track);
-        timelines.add(data);
     }
 
     private static Path saveDir() {

@@ -12,7 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import teddy.director.client.entity.DummyEntity;
-import teddy.director.client.access.DirectorLivingEntityStateAccess;
+import teddy.director.client.access.LivingEntityStateAccess;
 
 import java.util.Objects;
 
@@ -47,7 +47,7 @@ public class DummyEntityRenderer extends EntityRenderer<DummyEntity, DummyEntity
         state.delegateEntityType = target;
         state.animState = entity.animationState;
 
-        ((DirectorLivingEntityStateAccess) state.delegateState).director$setAnimState(entity.animationState);
+        ((LivingEntityStateAccess) state.delegateState).director$setAnimState(entity.animationState);
 
         // renderer.extractRenderState(target, state.delegateState, partialTicks);
     }

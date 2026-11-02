@@ -62,6 +62,7 @@ public class DirectorScreen extends Screen {
 
         handleFreecam();
         renderMovieWindow();
+        TimelineWindow.draw();
     }
 
     private static void renderMovieWindow() {

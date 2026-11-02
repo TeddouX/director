@@ -35,20 +35,22 @@ public class DummyPlaybackController {
             return;
 
         for (TimelineData.Track track : timeline.tracks) {
-            if (!Objects.equals(track.type, "model_part"))
-                break;
+            if (Objects.equals(track.type, "model_part")) {
+                int idx = track.getKeyFrameIndex(tick);
+                int nextIdx = idx + 1;
 
-            int idx = track.getKeyFrameIndex(tick);
-            int nextIdx = idx + 1;
+                ModelPartKeyframe keyframe = (ModelPartKeyframe) track.keyframes.get(idx);
 
-            ModelPartKeyframe keyframe = (ModelPartKeyframe) track.keyframes.get(idx);
+                ModelPartKeyframe nextKeyframe =
+                        nextIdx >= track.keyframes.size()
+                                ? (ModelPartKeyframe) track.keyframes.getLast()
+                                : (ModelPartKeyframe) track.keyframes.get(nextIdx);
 
-            ModelPartKeyframe nextKeyframe =
-                    nextIdx >= track.keyframes.size()
-                            ? (ModelPartKeyframe) track.keyframes.getLast()
-                            : (ModelPartKeyframe) track.keyframes.get(nextIdx);
-
-            keyframe.updateDummies(tick, timeline.controlledDummies, nextKeyframe);
+                keyframe.updateDummies(tick, timeline.controlledDummies, nextKeyframe);
+            }
+            else if (false) {
+                // do some other thing
+            }
         }
     }
 }
