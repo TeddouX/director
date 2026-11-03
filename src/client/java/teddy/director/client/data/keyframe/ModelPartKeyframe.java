@@ -4,29 +4,29 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
+import teddy.director.client.data.TimelineData;
 import teddy.director.client.entity.DummyEntity;
-import teddy.director.client.playback.DummyPlaybackController;
 import teddy.director.client.playback.MoviePlaybackController;
 
 import java.util.List;
 import java.util.UUID;
 
 public class ModelPartKeyframe extends AbstractKeyframe {
+    public static final String TYPE_ID = "model_part";
+
     public String key;
     public Vec3 position;
     public Vec3 rotation;
 
     public ModelPartKeyframe() {}
 
-    public ModelPartKeyframe(int tick, String key, Vec3 position, Vec3 rotation) {
-        super(tick);
-
-        this.key = key;
-        this.position = position;
-        this.rotation = rotation;
+    public ModelPartKeyframe(int tick, TimelineData parentTimeline) {
+        super(tick, parentTimeline);
     }
 
-    public void updateDummies(int currTick, List<UUID> entities, @NonNull ModelPartKeyframe next) {
+    @Override
+    public void update(int currTick, @NonNull AbstractKeyframe nextAbstract) {
+        ModelPartKeyframe next = (ModelPartKeyframe) nextAbstract;
         int dTick = next.tick - tick;
 
         float t = dTick == 0f ? 1f : (currTick - tick) / (float) dTick;
@@ -34,8 +34,8 @@ public class ModelPartKeyframe extends AbstractKeyframe {
         Vec3 lerpedPos = position.lerp(next.position, t);
         Vec3 lerpedRot = rotation.lerp(next.rotation, t);
 
-        for (UUID entityUUID : entities) {
-            DummyEntity entity = MoviePlaybackController.dummyPlaybackController.dummyEntities.get(entityUUID);
+        for (UUID entityUUID : parentTimeline.controlledDummies) {
+            DummyEntity entity = MoviePlaybackController.dummyEntities.get(entityUUID);
             if (entity == null)
                 continue;
 
@@ -43,9 +43,13 @@ public class ModelPartKeyframe extends AbstractKeyframe {
         }
     }
 
+    public void updateDummies(int currTick, List<UUID> entities, @NonNull ModelPartKeyframe next) {
+
+    }
+
     @Override
     public String getTypeId() {
-        return "model_part";
+        return TYPE_ID;
     }
 
     @Override

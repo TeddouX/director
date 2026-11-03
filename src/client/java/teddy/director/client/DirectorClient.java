@@ -17,12 +17,10 @@ import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
-import teddy.director.Director;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.DummyEntityRenderer;
-import teddy.director.client.playback.DummyPlaybackController;
 import teddy.director.client.playback.MoviePlaybackController;
 import teddy.director.client.screen.DirectorScreen;
 
@@ -85,7 +83,7 @@ public class DirectorClient implements ClientModInitializer {
 
 			level.addEntity(entity);
 
-			MoviePlaybackController.dummyPlaybackController.addDummyEntity(entity);
+			MoviePlaybackController.addDummyEntity(entity);
 
 			return 1;
 		}));

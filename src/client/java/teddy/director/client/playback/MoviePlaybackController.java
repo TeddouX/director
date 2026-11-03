@@ -4,21 +4,25 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.phys.Vec3;
 import teddy.director.Director;
 import teddy.director.client.DirectorClient;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.TimelineData;
+import teddy.director.client.data.keyframe.AbstractKeyframe;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class MoviePlaybackController {
-    public static DummyPlaybackController dummyPlaybackController = null;
+    public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
 
     public static void loadMovieData(MovieData movieData) {
         ClientLevel level = Minecraft.getInstance().level;
@@ -29,11 +33,7 @@ public class MoviePlaybackController {
 
         DirectorState.CURRENT_MOVIE = movieData;
 
-        if (dummyPlaybackController != null) {
-            dummyPlaybackController.removeAllEntities();
-        }
-        dummyPlaybackController = new DummyPlaybackController(level);
-
+        removeAllDummyEntities();
         summonAllDummies(movieData.dummies, level);
 
         // Original positions and state
@@ -45,8 +45,30 @@ public class MoviePlaybackController {
         if (currMovie == null)
             return;
 
-        for (TimelineData timeline : currMovie.timelines)
-            dummyPlaybackController.update(tick, timeline);
+        for (TimelineData timeline : currMovie.timelines) {
+            for (TimelineData.Track track : timeline.tracks) {
+                List<AbstractKeyframe> keyframes = track.getKeyFramesAffectingTick(tick);
+                boolean firstExists = keyframes.get(0) == null;
+                boolean secondExists = keyframes.get(1) == null;
+
+                if (!firstExists && !secondExists) {
+                    continue;
+                }
+                else if (!firstExists) {
+                    AbstractKeyframe kf2 = keyframes.get(1);
+                    kf2.update(tick, kf2);
+                }
+                else if (!secondExists) {
+                    AbstractKeyframe kf1 = keyframes.get(0);
+                    kf1.update(tick, kf1);
+                }
+                else {
+                    AbstractKeyframe kf1 = keyframes.get(0);
+                    AbstractKeyframe kf2 = keyframes.get(1);
+                    kf1.update(tick, kf2);
+                }
+            }
+        }
     }
 
     private static void summonAllDummies(List<DummyData> dummies, ClientLevel level) {
@@ -78,7 +100,21 @@ public class MoviePlaybackController {
 
             level.addEntity(dummyEntity);
 
-            dummyPlaybackController.addDummyEntity(dummyEntity);
+            addDummyEntity(dummyEntity);
+        }
+    }
+
+    public static void addDummyEntity(DummyEntity entity) {
+        dummyEntities.put(entity.data.uuid, entity);
+    }
+
+    public static void removeDummyEntity(UUID uuid) {
+        dummyEntities.remove(uuid);
+    }
+
+    public static void removeAllDummyEntities() {
+        for (DummyEntity entity : dummyEntities.values()) {
+            Minecraft.getInstance().level.removeEntity(entity.getId(), Entity.RemovalReason.DISCARDED);
         }
     }
 }

@@ -2,9 +2,7 @@ package teddy.director.client.data;
 
 import teddy.director.client.data.keyframe.AbstractKeyframe;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class TimelineData {
     public String name;
@@ -19,37 +17,39 @@ public class TimelineData {
         public String type;
 
         // Sorted by tick
-        public List<AbstractKeyframe> keyframes = new ArrayList<>();
+        public TreeMap<Integer, AbstractKeyframe> keyframes = new TreeMap<>();
 
         public Track(String name) {
             this.name = name;
         }
 
-        /// @return The last keyframe index if no keyframes exist for the tick
-        public int getKeyFrameIndex(int tick) {
-            int keyframesSize = keyframes.size() - 1;
+        public void addKeyframe(AbstractKeyframe keyframe) {
+            keyframes.put(keyframe.tick, keyframe);
+        }
 
-            if (tick >= keyframes.getLast().tick)
-                return keyframesSize;
-            else if (tick == keyframes.getFirst().tick)
-                return 0;
+        public List<AbstractKeyframe> getKeyFramesAffectingTick(int tick) {
+            Map.Entry<Integer, AbstractKeyframe> lower  = keyframes.floorEntry(tick);
+            Map.Entry<Integer, AbstractKeyframe> higher = keyframes.ceilingEntry(tick);
 
-            int lo = 0;
-            int hi = keyframesSize;
-
-            while (lo <= hi) {
-                int mid = (lo + hi) >>> 1; // lower bound average
-                int midTick = keyframes.get(mid).tick;
-
-                if (midTick < tick)
-                    lo = mid + 1;
-                else if (midTick > tick)
-                    hi = mid - 1;
-                else
-                    return mid;
+            List<AbstractKeyframe> list = new ArrayList<>(2);
+            if (lower == null && higher == null) {
+                list.add(null);
+                list.add(null);
+            }
+            else if (lower == null) {
+                list.add(null);
+                list.add(higher.getValue());
+            }
+            else if (higher == null) {
+                list.add(lower.getValue());
+                list.add(null);
+            }
+            else {
+                list.add(lower.getValue());
+                list.add(higher.getValue());
             }
 
-            return keyframesSize;
+            return list;
         }
     }
 }
