@@ -12,7 +12,6 @@ import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.TimelineData;
-import teddy.director.client.data.keyframe.AbstractKeyframe;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 
@@ -47,7 +46,7 @@ public class MoviePlaybackController {
 
         for (TimelineData timeline : currMovie.timelines) {
             for (TimelineData.Track track : timeline.tracks) {
-                List<AbstractKeyframe> keyframes = track.getKeyFramesAffectingTick(tick);
+                List<AbstractTrack> keyframes = track.getKeyFramesAffectingTick(tick);
                 boolean firstExists = keyframes.get(0) == null;
                 boolean secondExists = keyframes.get(1) == null;
 
@@ -55,16 +54,16 @@ public class MoviePlaybackController {
                     continue;
                 }
                 else if (!firstExists) {
-                    AbstractKeyframe kf2 = keyframes.get(1);
+                    AbstractTrack kf2 = keyframes.get(1);
                     kf2.update(tick, kf2);
                 }
                 else if (!secondExists) {
-                    AbstractKeyframe kf1 = keyframes.get(0);
+                    AbstractTrack kf1 = keyframes.get(0);
                     kf1.update(tick, kf1);
                 }
                 else {
-                    AbstractKeyframe kf1 = keyframes.get(0);
-                    AbstractKeyframe kf2 = keyframes.get(1);
+                    AbstractTrack kf1 = keyframes.get(0);
+                    AbstractTrack kf2 = keyframes.get(1);
                     kf1.update(tick, kf2);
                 }
             }

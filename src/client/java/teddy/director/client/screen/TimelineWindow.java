@@ -5,15 +5,11 @@ import imgui.flag.ImGuiKey;
 import imgui.flag.ImGuiMouseButton;
 import imgui.flag.ImGuiMouseCursor;
 import imgui.type.ImBoolean;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.TimelineData;
-import teddy.director.client.data.keyframe.AbstractKeyframe;
-import teddy.director.client.data.keyframe.KeyframeRegistry;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
-    private static final int BLUE_COLOR = ImColor.rgba(0, 0, 255, 255);
 
     private static final int PLAYHEAD_COLOR = ImColor.rgba(255, 80, 80, 255);
     private static final float PLAYHEAD_DRAGGABLE_AREA_HEIGHT = 15;
@@ -31,7 +27,7 @@ public class TimelineWindow {
     private static float trackEndPosY = 0;
     private static int rightClickMenuTrackIdx = -1;
     private static final ImBoolean keyframeWindowOpen = new ImBoolean(false);
-    private static AbstractKeyframe keyframeWindowKeyframe = null;
+    private static AbstractTrack keyframeWindowKeyframe = null;
 
     private static final float TICK_BASE_PIXEL_SEPARATION_SIZE = 4;
     private static final float TICK_LINE_HEIGHT = 6;
@@ -177,7 +173,7 @@ public class TimelineWindow {
 
         trackY = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
         for (TimelineData.Track track : TEMP_TEST_TRACKS) {
-            for (AbstractKeyframe kf : track.keyframes.values()) {
+            for (AbstractTrack kf : track.keyframes.values()) {
                 float kfX = tickToX(kf.tick);
                 // Do not draw if the keyframe is out of bounds
                 if (kfX <= trackStartPosX || kfX > windowOrigin.x + windowSize.x)
@@ -233,7 +229,7 @@ public class TimelineWindow {
 
         if (ImGui.beginPopup("track_right_click_menu")) {
             if (ImGui.selectable("Add keyframe")) {
-                AbstractKeyframe kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
+                AbstractTrack kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
                 kf.tick = xToTick(ImGui.getWindowPos().x);
                 // TEMP
                 kf.parentTimeline = null;
@@ -242,7 +238,7 @@ public class TimelineWindow {
                 rightClickMenuTrackIdx = -1;
             }
             else if (ImGui.selectable("Add keyframe at playhead")) {
-                AbstractKeyframe kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
+                AbstractTrack kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
                 kf.tick = playheadTick;
                 // TEMP
                 kf.parentTimeline = null;
@@ -309,7 +305,7 @@ public class TimelineWindow {
         }
     }
 
-    private static void openKeyframeWindow(AbstractKeyframe kf) {
+    private static void openKeyframeWindow(AbstractTrack kf) {
         keyframeWindowOpen.set(true);
         keyframeWindowKeyframe = kf;
     }
