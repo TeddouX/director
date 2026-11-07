@@ -2,8 +2,9 @@ package teddy.director.client.data;
 
 import com.google.gson.*;
 import net.fabricmc.loader.api.FabricLoader;
+import teddy.director.Director;
 
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -19,9 +20,11 @@ public class MovieData {
     private static final String ROOT_DIR_NAME = "director";
     private static final String MOVIE_SAVE_DIR_NAME = "movies";
 
+    private static List<SaveData> CACHED_SAVE_DATA = new ArrayList<>();
+
     public String name;
     public UUID uuid;
-    public List<SceneData> scenes;
+    public List<SceneData> scenes = new ArrayList<>();
 
     public MovieData() {}
 
@@ -63,20 +66,49 @@ public class MovieData {
     public static MovieData load(UUID movieUUID) throws IOException {
         Path saveDir = rootSaveDir().resolve(movieUUID.toString());
         Path movieDataSaveFile = saveDir.resolve(MOVIE_DATA_SAVE_FILE_NAME);
+        SaveData saveData = loadSaveData(movieDataSaveFile);
+
         MovieData movieData = new MovieData();
+        movieData.uuid = saveData.uuid;
+        movieData.name = saveData.name;
 
-        try (Reader reader = Files.newBufferedReader(movieDataSaveFile)) {
-            SaveData saveData = GSON.fromJson(reader, SaveData.class);
-            movieData.uuid = saveData.uuid;
-            movieData.name = saveData.name;
-
-            for (SaveData.TinySceneData tinySceneData : saveData.scenes) {
-                SceneData sceneData = SceneData.load(saveDir, tinySceneData.uuid, GSON);
-                movieData.scenes.add(sceneData);
-            }
+        for (SaveData.TinySceneData tinySceneData : saveData.scenes) {
+            SceneData sceneData = SceneData.load(saveDir, tinySceneData.uuid, GSON);
+            movieData.scenes.add(sceneData);
         }
 
         return movieData;
+    }
+
+    public static List<SaveData> listAllSavedMovies(boolean refreshCache) {
+        if (!refreshCache && !CACHED_SAVE_DATA.isEmpty())
+            return CACHED_SAVE_DATA;
+
+        List<SaveData> saveData = new ArrayList<>();
+
+        File[] movieDirs = rootSaveDir().toFile().listFiles((file, _) -> file.isDirectory());
+        if (movieDirs == null)
+            return saveData;
+
+        for (File movieDir : movieDirs) {
+            Path movieSaveFile = movieDir.toPath().resolve(MOVIE_DATA_SAVE_FILE_NAME);
+
+            try {
+                saveData.add(loadSaveData(movieSaveFile));
+            }
+            catch (IOException e) {
+                Director.LOGGER.error("Failed to read \"{}\": {}", movieSaveFile, e.getMessage());
+            }
+        }
+
+        CACHED_SAVE_DATA = saveData;
+        return CACHED_SAVE_DATA;
+    }
+
+    private static SaveData loadSaveData(Path movieDataSaveFile) throws IOException {
+        try (Reader reader = Files.newBufferedReader(movieDataSaveFile)) {
+            return GSON.fromJson(reader, SaveData.class);
+        }
     }
 
     public static class SaveData {

@@ -34,7 +34,7 @@ public class TimelineData {
 
             Path trackFile = timelineFolderPath.resolve(track.uuid.toString());
 
-            JsonObject obj = TrackRegistry.write(track);
+            JsonObject obj = TrackRegistry.write(track, gson);
             Files.writeString(trackFile, gson.toJson(obj));
         }
 
@@ -54,7 +54,7 @@ public class TimelineData {
             for (UUID trackUUID : saveData.trackUUIDs) {
                 Path trackFile = timelineFolderPath.resolve(trackUUID.toString());
                 JsonObject obj = JsonParser.parseReader(Files.newBufferedReader(trackFile)).getAsJsonObject();
-                AbstractTrack track = TrackRegistry.read(obj);
+                AbstractTrack track = TrackRegistry.read(obj, gson);
 
                 timelineData.tracks.add(track);
             }

@@ -1,5 +1,6 @@
 package teddy.director.client.data.track;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
@@ -14,20 +15,20 @@ public class TrackRegistry {
         TYPES.put(id, factory);
     }
 
-    public static JsonObject write(AbstractTrack track) {
+    public static JsonObject write(AbstractTrack track, Gson gson) {
         JsonObject obj = new JsonObject();
         obj.addProperty("type", track.getTypeID());
-        track.save(obj);
+        track.save(obj, gson);
 
         return obj;
     }
 
-    public static AbstractTrack read(JsonObject obj) {
+    public static AbstractTrack read(JsonObject obj, Gson gson) {
         String id = obj.get("type").getAsString();
         Supplier<? extends AbstractTrack> factory = getKeyframeFactory(id);
         AbstractTrack keyframe = factory.get();
 
-        keyframe.load(obj);
+        keyframe.load(obj, gson);
 
         return keyframe;
     }

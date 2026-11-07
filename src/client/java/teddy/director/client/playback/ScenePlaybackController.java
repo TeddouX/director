@@ -11,6 +11,7 @@ import teddy.director.client.DirectorClient;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.data.MovieData;
+import teddy.director.client.data.SceneData;
 import teddy.director.client.data.TimelineData;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
@@ -20,57 +21,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class MoviePlaybackController {
+public class ScenePlaybackController {
     public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
 
-    public static void loadMovieData(MovieData movieData) {
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) {
-            Director.LOGGER.error("Must be in a world to load a movie");
-            return;
-        }
-
-        DirectorState.CURRENT_MOVIE = movieData;
-
+    public static void setCurrentScene(SceneData sceneData) {
+        dummyEntities.clear();
         removeAllDummyEntities();
-        summonAllDummies(movieData.dummies, level);
 
-        // Original positions and state
+        summonAllDummies(sceneData.dummies);
+
+        // Set everything to its original state
         update(0);
     }
 
     public static void update(int tick) {
-        MovieData currMovie = DirectorState.CURRENT_MOVIE;
-        if (currMovie == null)
-            return;
 
-        for (TimelineData timeline : currMovie.timelines) {
-            for (TimelineData.Track track : timeline.tracks) {
-                List<AbstractTrack> keyframes = track.getKeyFramesAffectingTick(tick);
-                boolean firstExists = keyframes.get(0) == null;
-                boolean secondExists = keyframes.get(1) == null;
-
-                if (!firstExists && !secondExists) {
-                    continue;
-                }
-                else if (!firstExists) {
-                    AbstractTrack kf2 = keyframes.get(1);
-                    kf2.update(tick, kf2);
-                }
-                else if (!secondExists) {
-                    AbstractTrack kf1 = keyframes.get(0);
-                    kf1.update(tick, kf1);
-                }
-                else {
-                    AbstractTrack kf1 = keyframes.get(0);
-                    AbstractTrack kf2 = keyframes.get(1);
-                    kf1.update(tick, kf2);
-                }
-            }
-        }
     }
 
-    private static void summonAllDummies(List<DummyData> dummies, ClientLevel level) {
+    private static void summonAllDummies(List<DummyData> dummies) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null)
+            return;
+
         for (DummyData dummyData : dummies) {
             Identifier id = Identifier.tryParse(dummyData.displayEntityID);
             if (id == null) {

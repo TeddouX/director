@@ -21,7 +21,7 @@ import teddy.director.client.data.DummyData;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.DummyEntityRenderer;
-import teddy.director.client.playback.MoviePlaybackController;
+import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.DirectorScreen;
 
 import java.util.UUID;
@@ -62,6 +62,11 @@ public class DirectorClient implements ClientModInitializer {
 				return 0;
 			}
 
+			if (DirectorState.CURRENT_SCENE == null) {
+				ctx.getSource().sendFeedback(Component.literal("No scene selected. Please select a scene before summoning dummies."));
+				return 0;
+			}
+
 			ClientLevel level = ctx.getSource().getLevel();
 			Vec3 pos = ctx.getSource().getPosition();
 
@@ -77,13 +82,11 @@ public class DirectorClient implements ClientModInitializer {
 			entity.data = data;
 			entity.displayEntityType = DirectorState.DEFAULT_DUMMY_ENTITY_TYPE;
 
-			DirectorState.CURRENT_MOVIE.dummies.add(data);
-			// TEMP
-			DirectorState.CURRENT_MOVIE.timelines.getFirst().controlledDummies.add(data.uuid);
+			DirectorState.CURRENT_SCENE.dummies.add(data);
 
 			level.addEntity(entity);
 
-			MoviePlaybackController.addDummyEntity(entity);
+			ScenePlaybackController.addDummyEntity(entity);
 
 			return 1;
 		}));

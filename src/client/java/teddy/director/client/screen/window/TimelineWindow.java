@@ -1,12 +1,16 @@
-package teddy.director.client.screen;
+package teddy.director.client.screen.window;
 
 import imgui.*;
 import imgui.flag.ImGuiKey;
 import imgui.flag.ImGuiMouseButton;
 import imgui.flag.ImGuiMouseCursor;
 import imgui.type.ImBoolean;
+import teddy.director.Director;
 import teddy.director.client.DirectorState;
-import teddy.director.client.data.TimelineData;
+import teddy.director.client.data.track.AbstractTrack;
+import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+
+import java.util.List;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
@@ -27,7 +31,7 @@ public class TimelineWindow {
     private static float trackEndPosY = 0;
     private static int rightClickMenuTrackIdx = -1;
     private static final ImBoolean keyframeWindowOpen = new ImBoolean(false);
-    private static AbstractTrack keyframeWindowKeyframe = null;
+    private static AbstractKeyframe keyframeWindowKeyframe = null;
 
     private static final float TICK_BASE_PIXEL_SEPARATION_SIZE = 4;
     private static final float TICK_LINE_HEIGHT = 6;
@@ -42,39 +46,43 @@ public class TimelineWindow {
     private static boolean hovered = false;
     private static ImVec2 mousePos = new ImVec2();
 
-    static TimelineData.Track[] TEMP_TEST_TRACKS = {
-            new TimelineData.Track("Hello"),
-            new TimelineData.Track("Hello1"),
-            new TimelineData.Track("Hello2"),
-            new TimelineData.Track("Hello3"),
-            new TimelineData.Track("Hello4"),
-    };
-
     public static void draw() {
-        ImGui.begin("Timeline");
+        if (ImGui.begin("Timeline")) {
+            if (DirectorState.CURRENT_MOVIE == null) {
+                ImGui.text("Please load a movie to edit a timeline");
+                ImGui.end();
+                return;
+            }
 
-        if (DirectorState.CURRENT_MOVIE == null) {
-            ImGui.text("Please load a movie to edit a timeline");
-            ImGui.end();
-            return;
+            if (DirectorState.CURRENT_SCENE == null) {
+                ImGui.text("Please select a scene to edit a timeline");
+                ImGui.end();
+                return;
+            }
+
+            if (DirectorState.CURRENT_TIMELINE == null) {
+                ImGui.text("Please select a timeline to edit");
+                ImGui.end();
+                return;
+            }
+
+            ImGuiIO io = ImGui.getIO();
+            ImDrawList dl = ImGui.getWindowDrawList();
+            ImVec2 origin = ImGui.getCursorScreenPos();
+            ImVec2 size = ImGui.getContentRegionAvail();
+
+            ImGui.invisibleButton("##timeline", size);
+            hovered = ImGui.isItemHovered();
+            mousePos = io.getMousePos();
+
+            handleTimelineScrollAndZoom();
+
+            handleTracks(dl, origin, size);
+            drawTicks(dl, origin, size);
+            handlePlayhead(dl, origin, size);
+
+            drawKeyframeWindow();
         }
-
-        ImGuiIO io = ImGui.getIO();
-        ImDrawList dl = ImGui.getWindowDrawList();
-        ImVec2 origin = ImGui.getCursorScreenPos();
-        ImVec2 size = ImGui.getContentRegionAvail();
-
-        ImGui.invisibleButton("##timeline", size);
-        hovered = ImGui.isItemHovered();
-        mousePos = io.getMousePos();
-
-        handleTimelineScrollAndZoom();
-
-        handleTracks(dl, origin, size);
-        drawTicks(dl, origin, size);
-        handlePlayhead(dl, origin, size);
-
-        drawKeyframeWindow();
 
         ImGui.end();
     }
@@ -134,8 +142,10 @@ public class TimelineWindow {
                 TRACK_SEPARATOR_COLOR
         );
 
-        for (int i = 0; i < TEMP_TEST_TRACKS.length; i++) {
-            TimelineData.Track track = TEMP_TEST_TRACKS[i];
+        List<AbstractTrack> timelineTracks = DirectorState.CURRENT_TIMELINE.tracks;
+
+        for (int i = 0; i < timelineTracks.size(); i++) {
+            AbstractTrack track = timelineTracks.get(i);
             ImVec2 nameSize = ImGui.calcTextSize(track.name);
             trackStartPosX = Math.max(windowOrigin.x + nameSize.x, trackStartPosX);
 
@@ -172,8 +182,8 @@ public class TimelineWindow {
         trackEndPosY = trackY;
 
         trackY = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
-        for (TimelineData.Track track : TEMP_TEST_TRACKS) {
-            for (AbstractTrack kf : track.keyframes.values()) {
+        for (AbstractTrack track : DirectorState.CURRENT_TIMELINE.tracks) {
+            for (AbstractKeyframe kf : track.getKeyframes().values()) {
                 float kfX = tickToX(kf.tick);
                 // Do not draw if the keyframe is out of bounds
                 if (kfX <= trackStartPosX || kfX > windowOrigin.x + windowSize.x)
@@ -229,22 +239,10 @@ public class TimelineWindow {
 
         if (ImGui.beginPopup("track_right_click_menu")) {
             if (ImGui.selectable("Add keyframe")) {
-                AbstractTrack kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
-                kf.tick = xToTick(ImGui.getWindowPos().x);
-                // TEMP
-                kf.parentTimeline = null;
-
-                TEMP_TEST_TRACKS[rightClickMenuTrackIdx].addKeyframe(kf);
-                rightClickMenuTrackIdx = -1;
+                Director.LOGGER.info("Added keyframe");
             }
             else if (ImGui.selectable("Add keyframe at playhead")) {
-                AbstractTrack kf = KeyframeRegistry.getKeyframeFactory("model_part").get();
-                kf.tick = playheadTick;
-                // TEMP
-                kf.parentTimeline = null;
-
-                TEMP_TEST_TRACKS[rightClickMenuTrackIdx].addKeyframe(kf);
-                rightClickMenuTrackIdx = -1;
+                Director.LOGGER.info("Added keyframe at playhead");
             }
 
             ImGui.endPopup();
@@ -305,7 +303,7 @@ public class TimelineWindow {
         }
     }
 
-    private static void openKeyframeWindow(AbstractTrack kf) {
+    private static void openKeyframeWindow(AbstractKeyframe kf) {
         keyframeWindowOpen.set(true);
         keyframeWindowKeyframe = kf;
     }
