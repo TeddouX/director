@@ -96,9 +96,7 @@ public class MovieData {
             try {
                 saveData.add(loadSaveData(movieSaveFile));
             }
-            catch (IOException e) {
-                Director.LOGGER.error("Failed to read \"{}\": {}", movieSaveFile, e.getMessage());
-            }
+            catch (IOException _) {}
         }
 
         CACHED_SAVE_DATA = saveData;

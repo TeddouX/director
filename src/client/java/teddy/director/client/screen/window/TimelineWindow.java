@@ -1,19 +1,20 @@
 package teddy.director.client.screen.window;
 
 import imgui.*;
-import imgui.flag.ImGuiKey;
-import imgui.flag.ImGuiMouseButton;
-import imgui.flag.ImGuiMouseCursor;
+import imgui.flag.*;
 import imgui.type.ImBoolean;
+import imgui.type.ImString;
 import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
+import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 
 import java.util.List;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
+    private static final int ERROR_TEXT_COLOR = ImColor.rgba(245, 13, 13, 255);
 
     private static final int PLAYHEAD_COLOR = ImColor.rgba(255, 80, 80, 255);
     private static final float PLAYHEAD_DRAGGABLE_AREA_HEIGHT = 15;
@@ -32,6 +33,15 @@ public class TimelineWindow {
     private static int rightClickMenuTrackIdx = -1;
     private static final ImBoolean keyframeWindowOpen = new ImBoolean(false);
     private static AbstractKeyframe keyframeWindowKeyframe = null;
+    private static final ConfirmModal deleteTrackModal = new ConfirmModal("Delete Track");
+    private static final NameInputModal renameTrackModal = new NameInputModal("Rename Track");
+
+    private static boolean openCreateTrackPopup = false;
+    private static final String CREATE_TRACK_MODAL_NAME = "Create Track";
+    private static final ImString createTrackNameInput = new ImString();
+    private static int currentSelectedTrackType = -1;
+    private static boolean hasEmptyCreateTrackNameInput = false;
+    private static boolean hasNotSelectedTrackType = false;
 
     private static final float TICK_BASE_PIXEL_SEPARATION_SIZE = 4;
     private static final float TICK_LINE_HEIGHT = 6;
@@ -47,7 +57,13 @@ public class TimelineWindow {
     private static ImVec2 mousePos = new ImVec2();
 
     public static void draw() {
-        if (ImGui.begin("Timeline")) {
+        int windowFlags = 0;
+
+        boolean hasTimeline = DirectorState.CURRENT_TIMELINE != null;
+        if (hasTimeline)
+            windowFlags |= ImGuiWindowFlags.MenuBar;
+
+        if (ImGui.begin("Timeline", null, windowFlags)) {
             if (DirectorState.CURRENT_MOVIE == null) {
                 ImGui.text("Please load a movie to edit a timeline");
                 ImGui.end();
@@ -66,11 +82,19 @@ public class TimelineWindow {
                 return;
             }
 
+            drawMenuBar();
+
+            if (openCreateTrackPopup) {
+                ImGui.openPopup(CREATE_TRACK_MODAL_NAME);
+                openCreateTrackPopup = false;
+            }
+
             ImGuiIO io = ImGui.getIO();
             ImDrawList dl = ImGui.getWindowDrawList();
             ImVec2 origin = ImGui.getCursorScreenPos();
             ImVec2 size = ImGui.getContentRegionAvail();
 
+            ImGui.setNextItemAllowOverlap();
             ImGui.invisibleButton("##timeline", size);
             hovered = ImGui.isItemHovered();
             mousePos = io.getMousePos();
@@ -82,9 +106,37 @@ public class TimelineWindow {
             handlePlayhead(dl, origin, size);
 
             drawKeyframeWindow();
+            drawCreateTrackModal();
+            renameTrackModal.draw(name -> DirectorState.renameTrack(rightClickMenuTrackIdx, name));
+
+            if (rightClickMenuTrackIdx != -1) {
+                String deleteTrackTitle = "Are you sure you want to delete track %s ?"
+                        .formatted(DirectorState.getTrackName(rightClickMenuTrackIdx));
+
+                deleteTrackModal.draw(deleteTrackTitle, confirmed -> {
+                    if (!confirmed)
+                        return;
+
+                    DirectorState.deleteTrack(rightClickMenuTrackIdx);
+                    rightClickMenuTrackIdx = -1;
+                });
+            }
         }
 
         ImGui.end();
+    }
+
+    private static void drawMenuBar() {
+        if (ImGui.beginMenuBar()) {
+            if (ImGui.beginMenu("Track")) {
+                if (ImGui.menuItem("New"))
+                    openCreateTrackPopup = true;
+
+                ImGui.endMenu();
+            }
+
+            ImGui.endMenuBar();
+        }
     }
 
     private static void handlePlayhead(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
@@ -143,11 +195,15 @@ public class TimelineWindow {
         );
 
         List<AbstractTrack> timelineTracks = DirectorState.CURRENT_TIMELINE.tracks;
+        for (AbstractTrack track : timelineTracks) {
+            ImVec2 nameSize = ImGui.calcTextSize(track.name);
+            trackStartPosX = Math.max(windowOrigin.x + nameSize.x, trackStartPosX);
+        }
+        trackStartPosX += TRACK_NAME_PADDING * 2;
 
         for (int i = 0; i < timelineTracks.size(); i++) {
             AbstractTrack track = timelineTracks.get(i);
             ImVec2 nameSize = ImGui.calcTextSize(track.name);
-            trackStartPosX = Math.max(windowOrigin.x + nameSize.x, trackStartPosX);
 
             // Place the text in the middle
             float textPlaceY = trackY + (TRACK_HEIGHT / 2f) - (nameSize.y / 2f);
@@ -171,14 +227,24 @@ public class TimelineWindow {
                     windowSize.x, trackY
             );
 
-            if (ImGui.isMouseClicked(ImGuiMouseButton.Right) && mouseIsInTrack) {
-                ImGui.openPopup("track_right_click_menu");
-                rightClickMenuTrackIdx = i;
+            boolean mouseIsInTrackName = mouseIsInRect(
+                    windowOrigin.x, trackY - TRACK_HEIGHT,
+                    trackStartPosX, trackY
+            );
+
+            if (ImGui.isMouseClicked(ImGuiMouseButton.Right)) {
+                if (mouseIsInTrack) {
+                    ImGui.openPopup("track_right_click_menu");
+                    rightClickMenuTrackIdx = i;
+                }
+                else if (mouseIsInTrackName) {
+                    ImGui.openPopup("track_name_right_click_menu");
+                    rightClickMenuTrackIdx = i;
+                }
             }
         }
 
         // Apply left and right padding of the names
-        trackStartPosX += TRACK_NAME_PADDING * 2;
         trackEndPosY = trackY;
 
         trackY = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
@@ -231,12 +297,6 @@ public class TimelineWindow {
                 TRACK_SEPARATOR_COLOR
         );
 
-        dl.addLine(
-                windowOrigin.x, windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT,
-                windowOrigin.x, trackY,
-                TRACK_SEPARATOR_COLOR
-        );
-
         if (ImGui.beginPopup("track_right_click_menu")) {
             if (ImGui.selectable("Add keyframe")) {
                 Director.LOGGER.info("Added keyframe");
@@ -247,6 +307,23 @@ public class TimelineWindow {
 
             ImGui.endPopup();
         }
+
+        boolean openDeleteTrackModal = false;
+        boolean openRenameTrackModal = false;
+        if (ImGui.beginPopup("track_name_right_click_menu")) {
+            if (ImGui.selectable("Rename"))
+                openRenameTrackModal = true;
+            else if (ImGui.selectable("Delete"))
+                openDeleteTrackModal = true;
+
+            ImGui.endPopup();
+        }
+
+        if (openRenameTrackModal)
+            renameTrackModal.open();
+
+        if (openDeleteTrackModal)
+            deleteTrackModal.open();
     }
 
     private static void drawTicks(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
@@ -316,6 +393,67 @@ public class TimelineWindow {
         ImGui.textColored(255, 0, 0, 255, "WIP");
         ImGui.text(String.format("Tick: %d", keyframeWindowKeyframe.tick));
         ImGui.end();
+    }
+
+    private static void drawCreateTrackModal() {
+        ImVec2 center = ImGui.getMainViewport().getCenter();
+        ImGui.setNextWindowPos(center, ImGuiCond.Appearing, new ImVec2(0.5f, 0.5f));
+
+        if (ImGui.beginPopupModal(CREATE_TRACK_MODAL_NAME, null, ImGuiWindowFlags.AlwaysAutoResize)) {
+            if (ImGui.isWindowAppearing())
+                ImGui.setKeyboardFocusHere();
+            ImGui.inputText("Name", createTrackNameInput);
+
+            if (hasEmptyCreateTrackNameInput)
+                ImGui.textColored(ERROR_TEXT_COLOR, "Please input a track name");
+
+            List<String> trackTypes = TrackRegistry.getAllTrackTypeIDs();
+            String preview = currentSelectedTrackType >= 0 ? trackTypes.get(currentSelectedTrackType) : "Select a track type...";
+
+            if (ImGui.beginCombo("##timeline_combo", preview)) {
+                for (int i = 0; i < trackTypes.size(); i++) {
+                    String trackTypeId = trackTypes.get(i);
+                    boolean selected = i == currentSelectedTrackType;
+                    if (ImGui.selectable(trackTypeId + "###" + i, selected))
+                        currentSelectedTrackType = i;
+                }
+                ImGui.endCombo();
+            }
+
+            if (hasNotSelectedTrackType)
+                ImGui.textColored(ERROR_TEXT_COLOR, "Please select a track type");
+
+            ImGui.separator();
+
+            if (ImGui.button("Create")) {
+                hasEmptyCreateTrackNameInput = createTrackNameInput.isEmpty();
+                hasNotSelectedTrackType = currentSelectedTrackType == -1;
+
+                if (!hasEmptyCreateTrackNameInput && !hasNotSelectedTrackType) {
+                    DirectorState.createAndAddTrack(
+                            createTrackNameInput.get(),
+                            TrackRegistry.getAllTrackTypeIDs().get(currentSelectedTrackType)
+                    );
+
+                    resetCreateTrackModalData();
+                    ImGui.closeCurrentPopup();
+                }
+            }
+
+            ImGui.sameLine();
+
+            if (ImGui.button("Cancel")) {
+                resetCreateTrackModalData();
+                ImGui.closeCurrentPopup();
+            }
+
+            ImGui.endPopup();
+        }
+    }
+
+    private static void resetCreateTrackModalData() {
+        currentSelectedTrackType = -1;
+        createTrackNameInput.clear();
     }
 
     private static boolean mouseIsInRect(float rectULx, float rectULy, float rectDRx, float rectDRy) {

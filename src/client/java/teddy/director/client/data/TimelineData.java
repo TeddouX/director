@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 public class TimelineData {
     private static final String SAVE_FILE_NAME = "timeline_data.json";
@@ -18,6 +19,13 @@ public class TimelineData {
     public String name;
     public UUID uuid;
     public List<AbstractTrack> tracks = new ArrayList<>();
+
+    public TimelineData() {}
+
+    public TimelineData(String name) {
+        this.name = name;
+        this.uuid = UUID.randomUUID();
+    }
 
     public void save(Path sceneFolderPath, Gson gson) throws IOException {
         Path timelineFolderPath = sceneFolderPath.resolve(uuid.toString());

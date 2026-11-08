@@ -77,7 +77,7 @@ public class SceneData {
 
         public String name;
         public UUID uuid;
-        public List<DummyData> dummies;
-        public List<TinyTimelineData> timelines;
+        public List<DummyData> dummies = new ArrayList<>();
+        public List<TinyTimelineData> timelines = new ArrayList<>();
     }
 }
