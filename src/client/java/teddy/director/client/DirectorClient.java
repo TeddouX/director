@@ -74,10 +74,8 @@ public class DirectorClient implements ClientModInitializer {
 			entity.setPos(pos);
 			entity.setId(nextClientID());
 
-			DummyData data = new DummyData();
+			DummyData data = new DummyData("New Dummy");
 			data.displayEntityID = BuiltInRegistries.ENTITY_TYPE.getKey(DirectorState.DEFAULT_DUMMY_ENTITY_TYPE).toString();
-			data.name = "New Dummy";
-			data.uuid = UUID.randomUUID();
 
 			entity.data = data;
 			entity.displayEntityType = DirectorState.DEFAULT_DUMMY_ENTITY_TYPE;

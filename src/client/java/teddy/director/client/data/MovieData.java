@@ -3,6 +3,7 @@ package teddy.director.client.data;
 import com.google.gson.*;
 import net.fabricmc.loader.api.FabricLoader;
 import teddy.director.Director;
+import teddy.director.client.utils.Named;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class MovieData {
+public class MovieData extends Named {
     private static final Gson GSON = new GsonBuilder().create();
 
     private static final String MOVIE_DATA_SAVE_FILE_NAME = "movie_data.json";
@@ -22,14 +23,16 @@ public class MovieData {
 
     private static List<SaveData> CACHED_SAVE_DATA = new ArrayList<>();
 
-    public String name;
     public UUID uuid;
     public List<SceneData> scenes = new ArrayList<>();
 
-    public MovieData() {}
+    public MovieData() {
+        super("");
+    }
 
     public MovieData(String name) {
-        this.name = name;
+        super(name);
+
         this.uuid = UUID.randomUUID();
     }
 

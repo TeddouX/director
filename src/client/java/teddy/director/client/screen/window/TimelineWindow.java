@@ -9,6 +9,8 @@ import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.screen.window.utils.ConfirmModal;
+import teddy.director.client.screen.window.utils.NameInputModal;
 
 import java.util.List;
 
@@ -36,7 +38,6 @@ public class TimelineWindow {
     private static final ConfirmModal deleteTrackModal = new ConfirmModal("Delete Track");
     private static final NameInputModal renameTrackModal = new NameInputModal("Rename Track");
 
-    private static boolean openCreateTrackPopup = false;
     private static final String CREATE_TRACK_MODAL_NAME = "Create Track";
     private static final ImString createTrackNameInput = new ImString();
     private static int currentSelectedTrackType = -1;
@@ -84,11 +85,6 @@ public class TimelineWindow {
 
             drawMenuBar();
 
-            if (openCreateTrackPopup) {
-                ImGui.openPopup(CREATE_TRACK_MODAL_NAME);
-                openCreateTrackPopup = false;
-            }
-
             ImGuiIO io = ImGui.getIO();
             ImDrawList dl = ImGui.getWindowDrawList();
             ImVec2 origin = ImGui.getCursorScreenPos();
@@ -127,6 +123,7 @@ public class TimelineWindow {
     }
 
     private static void drawMenuBar() {
+        boolean openCreateTrackPopup = false;
         if (ImGui.beginMenuBar()) {
             if (ImGui.beginMenu("Track")) {
                 if (ImGui.menuItem("New"))
@@ -137,6 +134,9 @@ public class TimelineWindow {
 
             ImGui.endMenuBar();
         }
+
+        if (openCreateTrackPopup)
+            ImGui.openPopup(CREATE_TRACK_MODAL_NAME);
     }
 
     private static void handlePlayhead(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {

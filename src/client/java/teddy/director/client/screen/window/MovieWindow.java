@@ -2,14 +2,13 @@ package teddy.director.client.screen.window;
 
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
-import imgui.ImVec2;
-import imgui.flag.ImGuiCond;
 import imgui.flag.ImGuiWindowFlags;
-import imgui.type.ImString;
 import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
+import teddy.director.client.screen.window.utils.ConfirmModal;
+import teddy.director.client.screen.window.utils.NameInputModal;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,6 +16,8 @@ import java.util.List;
 public class MovieWindow {
     private static final NameInputModal CREATE_MOVIE_MODAL = new NameInputModal("Create Movie");
     private static final NameInputModal CREATE_SCENE_MODAL = new NameInputModal("Create Scene");
+    private static final NameInputModal RENAME_SCENE_MODAL = new NameInputModal("Rename Scene");
+    private static final ConfirmModal DELETE_SCENE_MODAL = new ConfirmModal("Delete Scene");
 
     private static final ImGuiTextFilter SCENE_SELECT_FILTER = new ImGuiTextFilter();
 
@@ -26,47 +27,7 @@ public class MovieWindow {
 
     public static void draw() {
         if (ImGui.begin("Movie", null, ImGuiWindowFlags.MenuBar)) {
-            boolean openCreateMoviePopup = false;
-
-            if (ImGui.beginMenuBar()) {
-                if (ImGui.beginMenu("File")) {
-                    if (ImGui.menuItem("New"))
-                        openCreateMoviePopup = true;
-
-                    if (ImGui.beginMenu("Open")) {
-                        boolean reloadCache = ImGui.menuItem("Reload");
-
-                        ImGui.separator();
-
-                        for (MovieData.SaveData saveData : MovieData.listAllSavedMovies(reloadCache)) {
-                            if (ImGui.menuItem(saveData.name)) {
-                                try {
-                                    DirectorState.CURRENT_MOVIE = MovieData.load(saveData.uuid);
-                                    currentSelectedSceneIdx = -1;
-                                }
-                                catch (IOException e) {
-                                    loadError = true;
-                                }
-                            }
-                        }
-
-                        ImGui.endMenu();
-                    }
-
-                    if (ImGui.menuItem("Save")) {
-                        try {
-                            DirectorState.CURRENT_MOVIE.save();
-                        }
-                        catch (IOException _) {
-                            saveError = true;
-                        }
-                    }
-
-                    ImGui.endMenu();
-                }
-
-                ImGui.endMenuBar();
-            }
+            drawMenuBar();
 
             if (saveError)
                 ImGui.textColored(255, 0, 0, 255, "Failed to save movie. See logs for more info");
@@ -84,9 +45,6 @@ public class MovieWindow {
                 drawSceneControl();
             }
 
-            if (openCreateMoviePopup)
-                CREATE_MOVIE_MODAL.open();
-
             CREATE_MOVIE_MODAL.draw(name -> {
                 MovieData movieData = new MovieData(name);
                 DirectorState.CURRENT_MOVIE = movieData;
@@ -98,6 +56,56 @@ public class MovieWindow {
         ImGui.end();
     }
 
+    public static void reset() {
+        currentSelectedSceneIdx = -1;
+    }
+
+    private static void drawMenuBar() {
+        boolean openCreateMoviePopup = false;
+        if (ImGui.beginMenuBar()) {
+            if (ImGui.beginMenu("File")) {
+                if (ImGui.menuItem("New"))
+                    openCreateMoviePopup = true;
+
+                if (ImGui.beginMenu("Open")) {
+                    boolean reloadCache = ImGui.menuItem("Reload");
+
+                    ImGui.separator();
+
+                    for (MovieData.SaveData saveData : MovieData.listAllSavedMovies(reloadCache)) {
+                        if (ImGui.menuItem(saveData.name)) {
+                            try {
+                                DirectorState.CURRENT_MOVIE = MovieData.load(saveData.uuid);
+                                reset();
+                            }
+                            catch (IOException e) {
+                                loadError = true;
+                            }
+                        }
+                    }
+
+                    ImGui.endMenu();
+                }
+
+                if (ImGui.menuItem("Save")) {
+                    try {
+                        DirectorState.CURRENT_MOVIE.save();
+                    }
+                    catch (IOException _) {
+                        saveError = true;
+                    }
+                }
+
+                ImGui.endMenu();
+            }
+
+            ImGui.endMenuBar();
+        }
+
+        if (openCreateMoviePopup)
+            CREATE_MOVIE_MODAL.open();
+    }
+
     private static void drawSceneControl() {
         List<SceneData> scenes = DirectorState.CURRENT_MOVIE.scenes;
 
@@ -107,6 +115,9 @@ public class MovieWindow {
             CREATE_SCENE_MODAL.open();
 
         String preview = currentSelectedSceneIdx >= 0 ? scenes.get(currentSelectedSceneIdx).name : "Select a scene...";
+
+        boolean openRenameModal = false;
+        boolean openDeleteModal = false;
         if (ImGui.beginCombo("##scene_combo", preview)) {
             SCENE_SELECT_FILTER.draw("Search");
 
@@ -118,22 +129,41 @@ public class MovieWindow {
                 boolean selected = i == currentSelectedSceneIdx;
                 if (ImGui.selectable(scenes.get(i).name + "###" + i, selected)) {
                     currentSelectedSceneIdx = i;
+                    DirectorState.setCurrentScene(currentSelectedSceneIdx);
 
-                    DirectorState.CURRENT_SCENE = scene;
                     SceneWindow.reset();
                 }
 
                 if (ImGui.beginPopupContextItem()) {
+                    currentSelectedSceneIdx = i;
+                    DirectorState.setCurrentScene(currentSelectedSceneIdx);
+
                     if (ImGui.menuItem("Rename"))
-                        Director.LOGGER.info("Rename");
+                        openRenameModal = true;
 
                     if (ImGui.menuItem("Delete"))
-                        Director.LOGGER.info("Delete");
+                        openDeleteModal = true;
 
                     ImGui.endPopup();
                 }
             }
+
             ImGui.endCombo();
+        }
+
+        if (openDeleteModal) DELETE_SCENE_MODAL.open();
+        if (openRenameModal) RENAME_SCENE_MODAL.open();
+
+        RENAME_SCENE_MODAL.draw(name -> DirectorState.renameScene(currentSelectedSceneIdx, name));
+
+        if (currentSelectedSceneIdx >= 0) {
+            String deleteSceneTitle = "Are you sure you want to delete scene %s ?"
+                    .formatted(DirectorState.getSceneName(currentSelectedSceneIdx));
+
+            DELETE_SCENE_MODAL.draw(deleteSceneTitle, confirm -> {
+                if (confirm)
+                    DirectorState.deleteScene(currentSelectedSceneIdx);
+            });
         }
 
         CREATE_SCENE_MODAL.draw(name -> {

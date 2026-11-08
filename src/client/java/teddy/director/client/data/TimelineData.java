@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
+import teddy.director.client.utils.Named;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -13,17 +14,19 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-public class TimelineData {
+public class TimelineData extends Named {
     private static final String SAVE_FILE_NAME = "timeline_data.json";
 
-    public String name;
     public UUID uuid;
     public List<AbstractTrack> tracks = new ArrayList<>();
 
-    public TimelineData() {}
+    public TimelineData() {
+        super("");
+    }
 
     public TimelineData(String name) {
-        this.name = name;
+        super(name);
+
         this.uuid = UUID.randomUUID();
     }
 

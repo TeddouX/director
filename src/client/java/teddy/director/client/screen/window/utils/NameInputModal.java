@@ -1,4 +1,4 @@
-package teddy.director.client.screen.window;
+package teddy.director.client.screen.window.utils;
 
 import imgui.ImColor;
 import imgui.ImGui;
@@ -38,7 +38,7 @@ public class NameInputModal {
 
             ImGui.separator();
 
-            if (ImGui.button("Create")) {
+            if (ImGui.button("Done")) {
                 if (!input.isEmpty()) {
                     onConfirm.accept(input.get());
                     input.clear();

@@ -1,6 +1,7 @@
 package teddy.director.client.data;
 
 import com.google.gson.Gson;
+import teddy.director.client.utils.Named;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -10,18 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class SceneData {
+public class SceneData extends Named {
     private static final String SAVE_FILE_NAME = "scene_data.json";
 
-    public String name;
     public UUID uuid;
     public List<TimelineData> timelines = new ArrayList<>();
     public List<DummyData> dummies = new ArrayList<>();
 
-    public SceneData() {}
+    public SceneData() {
+        super("");
+    }
 
     public SceneData(String name) {
-        this.name = name;
+        super(name);
         this.uuid = UUID.randomUUID();
     }
 

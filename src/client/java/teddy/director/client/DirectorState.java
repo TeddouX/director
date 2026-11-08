@@ -8,6 +8,9 @@ import teddy.director.client.data.SceneData;
 import teddy.director.client.data.TimelineData;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
+import teddy.director.client.utils.Named;
+
+import java.util.List;
 
 public class DirectorState {
     public static final EntityType<?> DEFAULT_DUMMY_ENTITY_TYPE = EntityTypes.ARMOR_STAND;
@@ -26,37 +29,75 @@ public class DirectorState {
         IS_ACTIVE = false;
     }
 
-    public static String getTrackName(int trackIdx) {
-        return CURRENT_TIMELINE.tracks.get(trackIdx).name;
+    // --- HELPERS ---
+
+    private static <T extends Named> void delete(List<T> list, int idx, String kind) {
+        Director.LOGGER.info("Deleted {} {}", kind, list.remove(idx).name);
     }
 
-    public static void renameTrack(int trackIdx, String newName) {
-        AbstractTrack track = CURRENT_TIMELINE.tracks.get(trackIdx);
-        String oldName = track.name;
-        track.name = newName;
-        
-        Director.LOGGER.info("Renamed track {} to {}", oldName, newName);
+    private static <T extends Named> void rename(List<T> list, int idx, String newName, String kind) {
+        T item = list.get(idx);
+        Director.LOGGER.info("Renamed {} {} to {}", kind, item.name, newName);
+        item.name = newName;
+    }
+
+    // --- SCENES ---
+
+    public static String getSceneName(int idx) {
+        return CURRENT_MOVIE == null ? "ERROR: No movie selected" : CURRENT_MOVIE.scenes.get(idx).name;
+    }
+
+    public static void deleteScene(int idx) {
+        if (CURRENT_MOVIE != null) delete(CURRENT_MOVIE.scenes, idx, "scene");
+    }
+
+    public static void renameScene(int idx, String newName) {
+        if (CURRENT_MOVIE != null) rename(CURRENT_MOVIE.scenes, idx, newName, "scene");
+    }
+
+    public static void setCurrentScene(int idx) {
+        CURRENT_SCENE = CURRENT_MOVIE.scenes.get(idx);
+    }
+
+    // --- TIMELINES ---
+
+    public static String getTimelineName(int idx) {
+        return CURRENT_SCENE == null ? "ERROR: No scene selected" : CURRENT_SCENE.timelines.get(idx).name;
+    }
+
+    public static void deleteTimeline(int idx) {
+        if (CURRENT_SCENE != null) delete(CURRENT_SCENE.timelines, idx, "timeline");
+    }
+
+    public static void renameTimeline(int idx, String newName) {
+        if (CURRENT_SCENE != null) rename(CURRENT_SCENE.timelines, idx, newName, "timeline");
+    }
+
+    public static void setCurrentTimeline(int idx) {
+        CURRENT_TIMELINE = CURRENT_SCENE.timelines.get(idx);
+    }
+
+    // --- TRACKS ---
+
+    public static String getTrackName(int idx) {
+        return CURRENT_TIMELINE == null ? "ERROR: No timeline loaded" : CURRENT_TIMELINE.tracks.get(idx).name;
+    }
+
+    public static void deleteTrack(int idx) {
+        if (CURRENT_TIMELINE != null) delete(CURRENT_TIMELINE.tracks, idx, "track");
+    }
+
+    public static void renameTrack(int idx, String newName) {
+        if (CURRENT_TIMELINE != null) rename(CURRENT_TIMELINE.tracks, idx, newName, "track");
     }
 
     public static int createAndAddTrack(String name, String type) {
-        if (CURRENT_TIMELINE == null)
-            return -1;
+        if (CURRENT_TIMELINE == null) return -1;
 
-        AbstractTrack abstractTrack = TrackRegistry.getTrackFactory(type).get();
-        abstractTrack.name = name;
-
-        CURRENT_TIMELINE.tracks.add(abstractTrack);
+        AbstractTrack track = TrackRegistry.getTrackFactory(type).get();
+        track.name = name;
+        CURRENT_TIMELINE.tracks.add(track);
         Director.LOGGER.info("Created track {}", name);
-
         return CURRENT_TIMELINE.tracks.size() - 1;
-    }
-
-    public static void deleteTrack(int trackIdx) {
-        if (CURRENT_TIMELINE == null)
-            return;
-
-        String trackName = getTrackName(trackIdx);
-        CURRENT_TIMELINE.tracks.remove(trackIdx);
-        Director.LOGGER.info("Deleted track {}", trackName);
     }
 }

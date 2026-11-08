@@ -4,16 +4,17 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 import teddy.director.client.data.track.keyframe.KeyframePair;
+import teddy.director.client.utils.Named;
 
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-public abstract class AbstractTrack {
+public abstract class AbstractTrack extends Named {
     public UUID uuid;
-    public String name;
 
     public AbstractTrack() {
+        super("");
         this.uuid = UUID.randomUUID();
     }
 
