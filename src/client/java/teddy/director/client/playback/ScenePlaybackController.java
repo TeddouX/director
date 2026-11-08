@@ -24,14 +24,18 @@ import java.util.UUID;
 public class ScenePlaybackController {
     public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
 
-    public static void setCurrentScene(SceneData sceneData) {
-        dummyEntities.clear();
+    public static void refreshScene() {
+        SceneData newData = DirectorState.CURRENT_SCENE;
+
         removeAllDummyEntities();
+        dummyEntities.clear();
 
-        summonAllDummies(sceneData.dummies);
+        if (newData != null) {
+            summonAllDummies(newData.dummies);
 
-        // Set everything to its original state
-        update(0);
+            // Set everything to its original state
+            update(0);
+        }
     }
 
     public static void update(int tick) {
@@ -43,36 +47,43 @@ public class ScenePlaybackController {
         if (level == null)
             return;
 
-        for (DummyData dummyData : dummies) {
-            Identifier id = Identifier.tryParse(dummyData.displayEntityID);
-            if (id == null) {
-                Director.LOGGER.error("Malformed identifier {}, skipping dummy {}",
-                        dummyData.displayEntityID,
-                        dummyData.name
-                );
-                continue;
-            }
+        for (DummyData dummyData : dummies)
+            summonDummy(dummyData);
+    }
 
-            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) {
-                Director.LOGGER.error("Entity type {} doesn't exist in the registry, skipping dummy {}",
-                        dummyData.displayEntityID,
-                        dummyData.name
-                );
-                continue;
-            }
+    public static void summonDummy(DummyData dummy) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null)
+            return;
 
-            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(id);
-
-            DummyEntity dummyEntity = new DummyEntity(ClientEntities.DUMMY, level);
-            dummyEntity.data = dummyData;
-            dummyEntity.displayEntityType = entityType;
-
-            dummyEntity.setId(DirectorClient.nextClientID());
-
-            level.addEntity(dummyEntity);
-
-            addDummyEntity(dummyEntity);
+        Identifier id = Identifier.tryParse(dummy.displayEntityID);
+        if (id == null) {
+            Director.LOGGER.error("Malformed identifier {}, skipping dummy {}",
+                    dummy.displayEntityID,
+                    dummy.name
+            );
+            return;
         }
+
+        if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) {
+            Director.LOGGER.error("Entity type {} doesn't exist in the registry, skipping dummy {}",
+                    dummy.displayEntityID,
+                    dummy.name
+            );
+            return;
+        }
+
+        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(id);
+
+        DummyEntity dummyEntity = new DummyEntity(ClientEntities.DUMMY, level);
+        dummyEntity.data = dummy;
+        dummyEntity.displayEntityType = entityType;
+
+        dummyEntity.setId(DirectorClient.nextClientID());
+
+        level.addEntity(dummyEntity);
+
+        addDummyEntity(dummyEntity);
     }
 
     public static void addDummyEntity(DummyEntity entity) {

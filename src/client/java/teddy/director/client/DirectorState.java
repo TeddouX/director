@@ -1,13 +1,16 @@
 package teddy.director.client;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import teddy.director.Director;
+import teddy.director.client.data.DummyData;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
 import teddy.director.client.data.TimelineData;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
+import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.utils.Named;
 
 import java.util.List;
@@ -27,7 +30,7 @@ public class DirectorState {
         CURRENT_SCENE = null;
         CURRENT_MOVIE = null;
 
-        IS_ACTIVE = false;
+        ScenePlaybackController.refreshScene();
     }
 
     // --- HELPERS ---
@@ -44,8 +47,9 @@ public class DirectorState {
 
     // --- MOVIE ---
     public static void createAndSetCurrentMovie(String name) {
-        MovieData movieData = new MovieData(name);
         reset();
+
+        MovieData movieData = new MovieData(name);
         CURRENT_MOVIE = movieData;
 
         Director.LOGGER.info("Created movie {}", movieData.name);
@@ -67,6 +71,28 @@ public class DirectorState {
 
     public static void setCurrentScene(int idx) {
         CURRENT_SCENE = CURRENT_MOVIE.scenes.get(idx);
+        ScenePlaybackController.refreshScene();
+    }
+
+    public static void createAndAddScene(String name) {
+        SceneData sceneData = new SceneData(name);
+
+        DirectorState.CURRENT_MOVIE.scenes.add(sceneData);
+        DirectorState.CURRENT_SCENE = sceneData;
+
+        ScenePlaybackController.refreshScene();
+
+        Director.LOGGER.info("Created scene {}", name);
+    }
+
+    public static void createAndSummonDummy(String name, EntityType<?> displayEntityType) {
+        if (CURRENT_SCENE == null) return;
+
+        DummyData dummyData = new DummyData(name);
+        dummyData.displayEntityID = BuiltInRegistries.ENTITY_TYPE.getKey(displayEntityType).toString();
+
+        CURRENT_SCENE.dummies.add(dummyData);
+        ScenePlaybackController.summonDummy(dummyData);
     }
 
     // --- TIMELINES ---
@@ -93,7 +119,7 @@ public class DirectorState {
         TimelineData timeline = new TimelineData(name);
         CURRENT_SCENE.timelines.add(timeline);
 
-        Director.LOGGER.info("Created scene {}", name);
+        Director.LOGGER.info("Created timeline {}", name);
 
         return CURRENT_SCENE.timelines.size() - 1;
     }

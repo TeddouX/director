@@ -72,7 +72,7 @@ public class MovieWindow {
                     ImGui.separator();
 
                     for (MovieData.SaveData saveData : MovieData.listAllSavedMovies(reloadCache)) {
-                        if (ImGui.menuItem(saveData.name)) {
+                        if (ImGui.menuItem(saveData.name + "##" + saveData.uuid.toString())) {
                             try {
                                 DirectorState.reset();
                                 DirectorState.CURRENT_MOVIE = MovieData.load(saveData.uuid);
@@ -168,14 +168,8 @@ public class MovieWindow {
         }
 
         CREATE_SCENE_MODAL.draw(name -> {
-            SceneData sceneData = new SceneData(name);
-
-            DirectorState.CURRENT_MOVIE.scenes.add(sceneData);
-            DirectorState.CURRENT_SCENE = sceneData;
-
+            DirectorState.createAndAddScene(name);
             currentSelectedSceneIdx = DirectorState.CURRENT_MOVIE.scenes.size() - 1;
-
-            Director.LOGGER.info("Created scene {}", name);
         });
     }
 }

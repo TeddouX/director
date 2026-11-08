@@ -6,8 +6,10 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,15 +33,22 @@ public class DummyEntityRenderer extends EntityRenderer<DummyEntity, DummyEntity
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void extractRenderState(DummyEntity entity, DummyEntityRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
 
         EntityType<?> target = entity.getDisplayEntity();
-        LivingEntityRenderState tempRenderState = new LivingEntityRenderState();
+        LivingEntityRenderState tempRenderState;
+        if (target == EntityTypes.PLAYER) {
+            AvatarRenderState avatarState = new AvatarRenderState();
+            avatarState.skin = DefaultPlayerSkin.getDefaultSkin();
+            tempRenderState = avatarState;
+        } else {
+            tempRenderState = new LivingEntityRenderState();
+        }
 
         tempRenderState.entityType = Objects.requireNonNullElse(target, EntityTypes.ARMOR_STAND);
 
+        @SuppressWarnings("unchecked")
         var renderer = (LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>) dispatcher.getRenderer(tempRenderState);
 
         state.delegateRenderer = renderer;
