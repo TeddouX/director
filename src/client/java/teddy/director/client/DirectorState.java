@@ -11,6 +11,7 @@ import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.utils.Named;
 
 import java.util.List;
+import java.util.UUID;
 
 public class DirectorState {
     public static final EntityType<?> DEFAULT_DUMMY_ENTITY_TYPE = EntityTypes.ARMOR_STAND;
@@ -39,6 +40,15 @@ public class DirectorState {
         T item = list.get(idx);
         Director.LOGGER.info("Renamed {} {} to {}", kind, item.name, newName);
         item.name = newName;
+    }
+
+    // --- MOVIE ---
+    public static void createAndSetCurrentMovie(String name) {
+        MovieData movieData = new MovieData(name);
+        reset();
+        CURRENT_MOVIE = movieData;
+
+        Director.LOGGER.info("Created movie {}", movieData.name);
     }
 
     // --- SCENES ---
@@ -77,7 +87,22 @@ public class DirectorState {
         CURRENT_TIMELINE = CURRENT_SCENE.timelines.get(idx);
     }
 
+    public static int createAndAddTimeline(String name) {
+        if (CURRENT_SCENE == null) return -1;
+
+        TimelineData timeline = new TimelineData(name);
+        CURRENT_SCENE.timelines.add(timeline);
+
+        Director.LOGGER.info("Created scene {}", name);
+
+        return CURRENT_SCENE.timelines.size() - 1;
+    }
+
     // --- TRACKS ---
+
+    public static AbstractTrack getTrack(int idx) {
+        return CURRENT_TIMELINE.tracks.get(idx);
+    }
 
     public static String getTrackName(int idx) {
         return CURRENT_TIMELINE == null ? "ERROR: No timeline loaded" : CURRENT_TIMELINE.tracks.get(idx).name;
@@ -96,8 +121,12 @@ public class DirectorState {
 
         AbstractTrack track = TrackRegistry.getTrackFactory(type).get();
         track.name = name;
+        track.uuid = UUID.randomUUID();
+
         CURRENT_TIMELINE.tracks.add(track);
+
         Director.LOGGER.info("Created track {}", name);
+
         return CURRENT_TIMELINE.tracks.size() - 1;
     }
 }

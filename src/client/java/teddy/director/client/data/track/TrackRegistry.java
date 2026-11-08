@@ -26,11 +26,11 @@ public class TrackRegistry {
     public static AbstractTrack read(JsonObject obj, Gson gson) {
         String id = obj.get("type").getAsString();
         Supplier<? extends AbstractTrack> factory = getTrackFactory(id);
-        AbstractTrack keyframe = factory.get();
+        AbstractTrack track = factory.get();
 
-        keyframe.load(obj, gson);
+        track.load(obj, gson);
 
-        return keyframe;
+        return track;
     }
 
     public static Supplier<? extends AbstractTrack> getTrackFactory(String name) {
@@ -51,7 +51,7 @@ public class TrackRegistry {
 
     static {
         register(DummyModelPartTrack.TYPE_ID, DummyModelPartTrack::new);
-        register(DummyPositionTrack.TYPE_ID, DummyPositionTrack::new);
+        // register(DummyPositionTrack.TYPE_ID, DummyPositionTrack::new);
 
         registrationFinished();
     }

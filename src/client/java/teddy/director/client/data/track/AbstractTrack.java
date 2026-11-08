@@ -15,7 +15,6 @@ public abstract class AbstractTrack extends Named {
 
     public AbstractTrack() {
         super("");
-        this.uuid = UUID.randomUUID();
     }
 
     public abstract String getTypeID();
@@ -29,6 +28,8 @@ public abstract class AbstractTrack extends Named {
         this.uuid = UUID.fromString(obj.get("uuid").getAsString());
         this.name = obj.get("name").getAsString();
     }
+
+    public abstract AbstractKeyframe createKeyframe(int tick);
 
     public abstract TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes();
 

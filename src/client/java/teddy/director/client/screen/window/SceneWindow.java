@@ -2,11 +2,10 @@ package teddy.director.client.screen.window;
 
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.TimelineData;
-import teddy.director.client.screen.window.utils.ConfirmModal;
-import teddy.director.client.screen.window.utils.NameInputModal;
+import teddy.director.client.utils.ConfirmModal;
+import teddy.director.client.utils.NameInputModal;
 
 import java.util.List;
 
@@ -104,14 +103,6 @@ public class SceneWindow {
             });
         }
 
-        CREATE_TIMELINE_POPUP.draw(name -> {
-            TimelineData timelineData = new TimelineData(name);
-            DirectorState.CURRENT_SCENE.timelines.add(timelineData);
-            DirectorState.CURRENT_TIMELINE = timelineData;
-
-            currentSelectedTimelineIdx = DirectorState.CURRENT_SCENE.timelines.size() - 1;
-
-            Director.LOGGER.info("Created timeline {}", name);
-        });
+        CREATE_TIMELINE_POPUP.draw(name -> DirectorState.setCurrentTimeline(DirectorState.createAndAddTimeline(name)));
     }
 }

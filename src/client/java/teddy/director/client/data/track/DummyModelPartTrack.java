@@ -14,12 +14,6 @@ public class DummyModelPartTrack extends AbstractTrack {
 
     private TreeMap<Integer, DummyModelPartKeyframe> keyframes = new TreeMap<>();
 
-    public DummyModelPartTrack() {}
-
-    public DummyModelPartTrack(String name) {
-        this.name = name;
-    }
-
     @Override
     public String getTypeID() {
         return TYPE_ID;
@@ -27,13 +21,24 @@ public class DummyModelPartTrack extends AbstractTrack {
 
     @Override
     public void save(JsonObject obj, Gson gson) {
+        super.save(obj, gson);
+
         obj.add("keyframes", gson.toJsonTree(keyframes));
     }
 
     @Override
     public void load(JsonObject obj, Gson gson) {
+        super.load(obj, gson);
+
         Type type = new TypeToken<TreeMap<Integer, DummyModelPartKeyframe>>(){}.getType();
         this.keyframes = gson.fromJson(obj.get("keyframes"), type);
+    }
+
+    @Override
+    public AbstractKeyframe createKeyframe(int tick) {
+        DummyModelPartKeyframe kf = new DummyModelPartKeyframe(tick);
+        keyframes.put(tick, kf);
+        return kf;
     }
 
     @Override

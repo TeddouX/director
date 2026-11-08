@@ -43,7 +43,7 @@ public class TimelineData extends Named {
         for (AbstractTrack track : tracks) {
             saveData.trackUUIDs.add(track.uuid);
 
-            Path trackFile = timelineFolderPath.resolve(track.uuid.toString());
+            Path trackFile = timelineFolderPath.resolve(track.uuid.toString() + ".json");
 
             JsonObject obj = TrackRegistry.write(track, gson);
             Files.writeString(trackFile, gson.toJson(obj));
@@ -63,7 +63,7 @@ public class TimelineData extends Named {
             timelineData.name = saveData.name;
 
             for (UUID trackUUID : saveData.trackUUIDs) {
-                Path trackFile = timelineFolderPath.resolve(trackUUID.toString());
+                Path trackFile = timelineFolderPath.resolve(trackUUID.toString() + ".json");
                 JsonObject obj = JsonParser.parseReader(Files.newBufferedReader(trackFile)).getAsJsonObject();
                 AbstractTrack track = TrackRegistry.read(obj, gson);
 

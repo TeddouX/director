@@ -3,6 +3,7 @@ package teddy.director.client.data.track;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.data.track.keyframe.DummyModelPartKeyframe;
 import teddy.director.client.data.track.keyframe.DummyPositionKeyframe;
 
 import java.util.TreeMap;
@@ -25,6 +26,13 @@ public class DummyPositionTrack extends AbstractTrack {
     @Override
     public void load(JsonObject obj, Gson gson) {
 
+    }
+
+    @Override
+    public AbstractKeyframe createKeyframe(int tick) {
+        DummyPositionKeyframe kf = new DummyPositionKeyframe(tick);
+        keyframes.put(tick, kf);
+        return kf;
     }
 
     @Override

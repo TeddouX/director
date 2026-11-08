@@ -8,11 +8,14 @@ import teddy.director.client.utils.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class MovieData extends Named {
     private static final Gson GSON = new GsonBuilder().create();
@@ -46,6 +49,8 @@ public class MovieData extends Named {
     public void save() throws IOException {
         Path saveDir = rootSaveDir().resolve(uuid.toString());
         Files.createDirectories(saveDir);
+
+        clearDir(saveDir);
 
         Path movieDataSaveFile = saveDir.resolve(MOVIE_DATA_SAVE_FILE_NAME);
 
@@ -109,6 +114,20 @@ public class MovieData extends Named {
     private static SaveData loadSaveData(Path movieDataSaveFile) throws IOException {
         try (Reader reader = Files.newBufferedReader(movieDataSaveFile)) {
             return GSON.fromJson(reader, SaveData.class);
+        }
+    }
+
+    private static void clearDir(Path dir) throws IOException {
+        try (Stream<Path> paths = Files.walk(dir)) {
+            paths.sorted(Comparator.reverseOrder())
+                    .filter(p -> !p.equals(dir))
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
         }
     }
 

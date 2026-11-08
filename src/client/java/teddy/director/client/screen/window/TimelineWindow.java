@@ -2,15 +2,13 @@ package teddy.director.client.screen.window;
 
 import imgui.*;
 import imgui.flag.*;
-import imgui.type.ImBoolean;
 import imgui.type.ImString;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
-import teddy.director.client.screen.window.utils.ConfirmModal;
-import teddy.director.client.screen.window.utils.NameInputModal;
+import teddy.director.client.utils.ConfirmModal;
+import teddy.director.client.utils.NameInputModal;
 
 import java.util.List;
 
@@ -33,8 +31,7 @@ public class TimelineWindow {
     private static float trackStartPosX = 0;
     private static float trackEndPosY = 0;
     private static int rightClickMenuTrackIdx = -1;
-    private static final ImBoolean keyframeWindowOpen = new ImBoolean(false);
-    private static AbstractKeyframe keyframeWindowKeyframe = null;
+    private static AbstractKeyframe selectedKeyframe = null;
     private static final ConfirmModal deleteTrackModal = new ConfirmModal("Delete Track");
     private static final NameInputModal renameTrackModal = new NameInputModal("Rename Track");
 
@@ -101,22 +98,11 @@ public class TimelineWindow {
             drawTicks(dl, origin, size);
             handlePlayhead(dl, origin, size);
 
-            drawKeyframeWindow();
             drawCreateTrackModal();
             renameTrackModal.draw(name -> DirectorState.renameTrack(rightClickMenuTrackIdx, name));
 
-            if (rightClickMenuTrackIdx != -1) {
-                String deleteTrackTitle = "Are you sure you want to delete track %s ?"
-                        .formatted(DirectorState.getTrackName(rightClickMenuTrackIdx));
-
-                deleteTrackModal.draw(deleteTrackTitle, confirmed -> {
-                    if (!confirmed)
-                        return;
-
-                    DirectorState.deleteTrack(rightClickMenuTrackIdx);
-                    rightClickMenuTrackIdx = -1;
-                });
-            }
+            if (selectedKeyframe != null)
+                selectedKeyframe.drawImGuiWindow();
         }
 
         ImGui.end();
@@ -298,12 +284,10 @@ public class TimelineWindow {
         );
 
         if (ImGui.beginPopup("track_right_click_menu")) {
-            if (ImGui.selectable("Add keyframe")) {
-                Director.LOGGER.info("Added keyframe");
-            }
-            else if (ImGui.selectable("Add keyframe at playhead")) {
-                Director.LOGGER.info("Added keyframe at playhead");
-            }
+            if (ImGui.selectable("Add keyframe"))
+                createKeyframe(xToTick(ImGui.getWindowPos().x));
+            else if (ImGui.selectable("Add keyframe at playhead"))
+                createKeyframe(playheadTick);
 
             ImGui.endPopup();
         }
@@ -311,6 +295,10 @@ public class TimelineWindow {
         boolean openDeleteTrackModal = false;
         boolean openRenameTrackModal = false;
         if (ImGui.beginPopup("track_name_right_click_menu")) {
+            if (ImGui.selectable("Edit"));
+
+            ImGui.separator();
+
             if (ImGui.selectable("Rename"))
                 openRenameTrackModal = true;
             else if (ImGui.selectable("Delete"))
@@ -324,6 +312,26 @@ public class TimelineWindow {
 
         if (openDeleteTrackModal)
             deleteTrackModal.open();
+
+        if (rightClickMenuTrackIdx != -1) {
+            String deleteTrackTitle = "Are you sure you want to delete track %s ?"
+                    .formatted(DirectorState.getTrackName(rightClickMenuTrackIdx));
+
+            deleteTrackModal.draw(deleteTrackTitle, confirmed -> {
+                if (!confirmed)
+                    return;
+
+                DirectorState.deleteTrack(rightClickMenuTrackIdx);
+                rightClickMenuTrackIdx = -1;
+            });
+        }
+    }
+
+    private static void createKeyframe(int tick) {
+        AbstractTrack track = DirectorState.getTrack(rightClickMenuTrackIdx);
+        AbstractKeyframe kf = track.createKeyframe(tick);
+
+        openKeyframeWindow(kf);
     }
 
     private static void drawTicks(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
@@ -381,18 +389,8 @@ public class TimelineWindow {
     }
 
     private static void openKeyframeWindow(AbstractKeyframe kf) {
-        keyframeWindowOpen.set(true);
-        keyframeWindowKeyframe = kf;
-    }
-
-    private static void drawKeyframeWindow() {
-        if (!keyframeWindowOpen.get())
-            return;
-
-        ImGui.begin("Keyframe", keyframeWindowOpen);
-        ImGui.textColored(255, 0, 0, 255, "WIP");
-        ImGui.text(String.format("Tick: %d", keyframeWindowKeyframe.tick));
-        ImGui.end();
+        selectedKeyframe = kf;
+        selectedKeyframe.openImGuiWindow();
     }
 
     private static void drawCreateTrackModal() {

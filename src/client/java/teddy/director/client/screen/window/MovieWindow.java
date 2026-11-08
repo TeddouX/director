@@ -7,8 +7,8 @@ import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
-import teddy.director.client.screen.window.utils.ConfirmModal;
-import teddy.director.client.screen.window.utils.NameInputModal;
+import teddy.director.client.utils.ConfirmModal;
+import teddy.director.client.utils.NameInputModal;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,10 +46,9 @@ public class MovieWindow {
             }
 
             CREATE_MOVIE_MODAL.draw(name -> {
-                MovieData movieData = new MovieData(name);
-                DirectorState.CURRENT_MOVIE = movieData;
+                reset();
 
-                Director.LOGGER.info("Created movie {}", movieData.name);
+                DirectorState.createAndSetCurrentMovie(name);
             });
         }
 
@@ -75,7 +74,9 @@ public class MovieWindow {
                     for (MovieData.SaveData saveData : MovieData.listAllSavedMovies(reloadCache)) {
                         if (ImGui.menuItem(saveData.name)) {
                             try {
+                                DirectorState.reset();
                                 DirectorState.CURRENT_MOVIE = MovieData.load(saveData.uuid);
+
                                 reset();
                             }
                             catch (IOException e) {
