@@ -2,7 +2,7 @@ package teddy.director.client;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
+import org.jspecify.annotations.Nullable;
 import teddy.director.Director;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.data.MovieData;
@@ -14,12 +14,9 @@ import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.Freecam;
 import teddy.director.client.utils.Named;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class DirectorState {
-    public static final EntityType<?> DEFAULT_DUMMY_ENTITY_TYPE = EntityTypes.ARMOR_STAND;
-
     public static MovieData CURRENT_MOVIE = null;
     public static SceneData CURRENT_SCENE = null;
     public static TimelineData CURRENT_TIMELINE = null;
@@ -37,12 +34,12 @@ public class DirectorState {
     // --- HELPERS ---
 
     private static <T extends Named> void delete(List<T> list, int idx, String kind) {
-        Director.LOGGER.info("Deleted {} {}", kind, list.remove(idx).name);
+        Director.LOGGER.info("Deleted {} \"{}\"", kind, list.remove(idx).name);
     }
 
     private static <T extends Named> void rename(List<T> list, int idx, String newName, String kind) {
         T item = list.get(idx);
-        Director.LOGGER.info("Renamed {} {} to {}", kind, item.name, newName);
+        Director.LOGGER.info("Renamed {} \"{}\" to \"{}\"", kind, item.name, newName);
         item.name = newName;
     }
 
@@ -53,7 +50,7 @@ public class DirectorState {
         MovieData movieData = new MovieData(name);
         CURRENT_MOVIE = movieData;
 
-        Director.LOGGER.info("Created movie {}", movieData.name);
+        Director.LOGGER.info("Created movie \"{}\"", movieData.name);
     }
 
     // --- SCENES ---
@@ -75,15 +72,16 @@ public class DirectorState {
         ScenePlaybackController.refreshScene();
     }
 
-    public static void createAndAddScene(String name) {
+    public static int createAndAddScene(String name) {
         SceneData sceneData = new SceneData(name);
 
         DirectorState.CURRENT_MOVIE.scenes.add(sceneData);
-        DirectorState.CURRENT_SCENE = sceneData;
 
         ScenePlaybackController.refreshScene();
 
-        Director.LOGGER.info("Created scene {}", name);
+        Director.LOGGER.info("Created scene \"{}\"", name);
+
+        return DirectorState.CURRENT_MOVIE.scenes.size() - 1;
     }
 
     public static void createAndSummonDummy(String name, EntityType<?> displayEntityType) {
@@ -93,8 +91,19 @@ public class DirectorState {
         dummyData.displayEntityID = BuiltInRegistries.ENTITY_TYPE.getKey(displayEntityType).toString();
         dummyData.pos = Freecam.pos;
 
-        CURRENT_SCENE.dummies.add(dummyData);
+        CURRENT_SCENE.dummies.put(dummyData.uuid, dummyData);
         ScenePlaybackController.summonDummy(dummyData);
+    }
+
+    public static Map<UUID, DummyData> getAllDummies() {
+        if (CURRENT_SCENE == null) return new HashMap<>();
+        return CURRENT_SCENE.dummies;
+    }
+
+    @Nullable
+    public static DummyData getDummy(UUID uuid) {
+        if (CURRENT_SCENE == null) return null;
+        return CURRENT_SCENE.dummies.get(uuid);
     }
 
     // --- TIMELINES ---
@@ -144,8 +153,8 @@ public class DirectorState {
         if (CURRENT_TIMELINE != null) rename(CURRENT_TIMELINE.tracks, idx, newName, "track");
     }
 
-    public static int createAndAddTrack(String name, String type) {
-        if (CURRENT_TIMELINE == null) return -1;
+    public static void createAndAddTrack(String name, String type) {
+        if (CURRENT_TIMELINE == null) return;
 
         AbstractTrack track = TrackRegistry.getTrackFactory(type).get();
         track.name = name;
@@ -153,8 +162,7 @@ public class DirectorState {
 
         CURRENT_TIMELINE.tracks.add(track);
 
-        Director.LOGGER.info("Created track {}", name);
+        Director.LOGGER.info("Created track \"{}\"", name);
 
-        return CURRENT_TIMELINE.tracks.size() - 1;
     }
 }

@@ -7,16 +7,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class SceneData extends Named {
     private static final String SAVE_FILE_NAME = "scene_data.json";
 
     public UUID uuid;
     public List<TimelineData> timelines = new ArrayList<>();
-    public List<DummyData> dummies = new ArrayList<>();
+    public Map<UUID, DummyData> dummies = new HashMap<>();
 
     public SceneData() {
         super("");
@@ -79,7 +77,7 @@ public class SceneData extends Named {
 
         public String name;
         public UUID uuid;
-        public List<DummyData> dummies = new ArrayList<>();
+        public Map<UUID, DummyData> dummies = new HashMap<>();
         public List<TinyTimelineData> timelines = new ArrayList<>();
     }
 }

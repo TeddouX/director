@@ -1,13 +1,12 @@
 package teddy.director.client.screen.window;
 
 import imgui.ImGui;
-import imgui.ImGuiTextFilter;
 import imgui.flag.ImGuiWindowFlags;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
 import teddy.director.client.utils.ConfirmModal;
+import teddy.director.client.utils.FilteredCombo;
 import teddy.director.client.utils.NameInputModal;
 
 import java.io.IOException;
@@ -18,12 +17,13 @@ public class MovieWindow {
     private static final NameInputModal CREATE_SCENE_MODAL = new NameInputModal("Create Scene");
     private static final NameInputModal RENAME_SCENE_MODAL = new NameInputModal("Rename Scene");
     private static final ConfirmModal DELETE_SCENE_MODAL = new ConfirmModal("Delete Scene");
-
-    private static final ImGuiTextFilter SCENE_SELECT_FILTER = new ImGuiTextFilter();
+    private static final FilteredCombo SCENES_COMBO = new FilteredCombo("Scenes", "Select a scene...");
 
     private static boolean saveError = false;
     private static boolean loadError = false;
     private static int currentSelectedSceneIdx = -1;
+    private static boolean openSceneRenameModal = false;
+    private static boolean openSceneDeleteModal = false;
 
     public static void draw() {
         if (ImGui.begin("Movie", null, ImGuiWindowFlags.MenuBar)) {
@@ -115,61 +115,65 @@ public class MovieWindow {
         if (ImGui.button("New scene..."))
             CREATE_SCENE_MODAL.open();
 
-        String preview = currentSelectedSceneIdx >= 0 ? scenes.get(currentSelectedSceneIdx).name : "Select a scene...";
+        int selected = SCENES_COMBO.draw(
+                scenes.size(),
+                i -> scenes.get(i).name,
+                i -> {
+                    if (ImGui.beginPopupContextItem()) {
+                        SCENES_COMBO.setSelectedItemIdx(i);
+                        currentSelectedSceneIdx = i;
 
-        boolean openRenameModal = false;
-        boolean openDeleteModal = false;
-        if (ImGui.beginCombo("##scene_combo", preview)) {
-            SCENE_SELECT_FILTER.draw("Search");
+                        SceneWindow.reset();
+                        DirectorState.setCurrentScene(i);
 
-            for (int i = 0; i < scenes.size(); i++) {
-                SceneData scene = scenes.get(i);
-                if (!SCENE_SELECT_FILTER.passFilter(scene.name))
-                    continue;
+                        if (ImGui.menuItem("Rename"))
+                            openSceneRenameModal = true;
 
-                boolean selected = i == currentSelectedSceneIdx;
-                if (ImGui.selectable(scenes.get(i).name + "###" + i, selected)) {
-                    currentSelectedSceneIdx = i;
-                    DirectorState.setCurrentScene(currentSelectedSceneIdx);
+                        if (ImGui.menuItem("Delete"))
+                            openSceneDeleteModal = true;
 
-                    SceneWindow.reset();
+                        ImGui.endPopup();
+                    }
                 }
+        );
 
-                if (ImGui.beginPopupContextItem()) {
-                    currentSelectedSceneIdx = i;
-                    DirectorState.setCurrentScene(currentSelectedSceneIdx);
-
-                    if (ImGui.menuItem("Rename"))
-                        openRenameModal = true;
-
-                    if (ImGui.menuItem("Delete"))
-                        openDeleteModal = true;
-
-                    ImGui.endPopup();
-                }
-            }
-
-            ImGui.endCombo();
+        if (selected >= 0) {
+            SceneWindow.reset();
+            DirectorState.setCurrentScene(selected);
         }
 
-        if (openDeleteModal) DELETE_SCENE_MODAL.open();
-        if (openRenameModal) RENAME_SCENE_MODAL.open();
+        if (openSceneDeleteModal) {
+            DELETE_SCENE_MODAL.open();
+            openSceneDeleteModal = false;
+        }
+
+        if (openSceneRenameModal) {
+            RENAME_SCENE_MODAL.open();
+            openSceneRenameModal = false;
+        }
 
         RENAME_SCENE_MODAL.draw(name -> DirectorState.renameScene(currentSelectedSceneIdx, name));
 
         if (currentSelectedSceneIdx >= 0) {
-            String deleteSceneTitle = "Are you sure you want to delete scene %s ?"
+            String deleteSceneTitle = "Are you sure you want to delete scene \"%s\" ?"
                     .formatted(DirectorState.getSceneName(currentSelectedSceneIdx));
 
             DELETE_SCENE_MODAL.draw(deleteSceneTitle, confirm -> {
-                if (confirm)
+                if (confirm) {
                     DirectorState.deleteScene(currentSelectedSceneIdx);
+                    DirectorState.CURRENT_SCENE = null;
+
+                    SceneWindow.reset();
+                    SCENES_COMBO.setSelectedItemIdx(-1);
+                    currentSelectedSceneIdx = -1;
+                }
             });
         }
 
         CREATE_SCENE_MODAL.draw(name -> {
-            DirectorState.createAndAddScene(name);
-            currentSelectedSceneIdx = DirectorState.CURRENT_MOVIE.scenes.size() - 1;
+            currentSelectedSceneIdx = DirectorState.createAndAddScene(name);
+            SCENES_COMBO.setSelectedItemIdx(currentSelectedSceneIdx);
+            DirectorState.setCurrentScene(currentSelectedSceneIdx);
         });
     }
 }

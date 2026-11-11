@@ -3,6 +3,7 @@ package teddy.director.client.utils;
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
 import org.jetbrains.annotations.Nullable;
+import teddy.director.Director;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -23,10 +24,13 @@ public class FilteredCombo {
             Function<Integer, String> getItemAt,
             @Nullable Consumer<Integer> eachItem
     ) {
+        if (selectedItemIdx >= numItems)
+            selectedItemIdx = -1;
+
         String preview = selectedItemIdx >= 0 ? getItemAt.apply(selectedItemIdx) : defaultPreview;
         int clicked = -1;
 
-        if (ImGui.beginCombo("##" + name, preview)) {
+        if (ImGui.beginCombo(name, preview)) {
             if (ImGui.isWindowAppearing())
                 ImGui.setKeyboardFocusHere();
 

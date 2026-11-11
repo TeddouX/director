@@ -2,6 +2,7 @@ package teddy.director.client.data.track;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import imgui.type.ImBoolean;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 import teddy.director.client.data.track.keyframe.KeyframePair;
 import teddy.director.client.utils.Named;
@@ -11,6 +12,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 public abstract class AbstractTrack extends Named {
+    public transient ImBoolean windowOpen = new ImBoolean(false);
     public UUID uuid;
 
     public AbstractTrack() {
@@ -42,5 +44,11 @@ public abstract class AbstractTrack extends Named {
                 higher == null ? null : higher.getValue()
         );
     }
+
+    public void showEditWindow() {
+        windowOpen.set(true);
+    }
+
+    public abstract void drawEditWindow();
 }
 

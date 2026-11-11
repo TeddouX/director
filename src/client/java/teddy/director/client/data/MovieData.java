@@ -2,6 +2,7 @@ package teddy.director.client.data;
 
 import com.google.gson.*;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.phys.Vec3;
 import teddy.director.Director;
 import teddy.director.client.utils.Named;
 
@@ -18,7 +19,25 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public class MovieData extends Named {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(Vec3.class, (JsonSerializer<Vec3>) (v, _, _) -> {
+                JsonObject o = new JsonObject();
+                o.addProperty("x", v.x);
+                o.addProperty("y", v.y);
+                o.addProperty("z", v.z);
+
+                return o;
+            })
+            .registerTypeAdapter(Vec3.class, (JsonDeserializer<Vec3>) (json, _, _) -> {
+                JsonObject o = json.getAsJsonObject();
+
+                return new Vec3(
+                        o.get("x").getAsDouble(),
+                        o.get("y").getAsDouble(),
+                        o.get("z").getAsDouble()
+                );
+            })
+            .create();
 
     private static final String MOVIE_DATA_SAVE_FILE_NAME = "movie_data.json";
     private static final String ROOT_DIR_NAME = "director";
@@ -84,6 +103,8 @@ public class MovieData extends Named {
             SceneData sceneData = SceneData.load(saveDir, tinySceneData.uuid, GSON);
             movieData.scenes.add(sceneData);
         }
+
+        Director.LOGGER.info("Loaded movie \"{}\"", movieData.name);
 
         return movieData;
     }

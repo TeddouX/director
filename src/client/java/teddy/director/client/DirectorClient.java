@@ -54,39 +54,6 @@ public class DirectorClient implements ClientModInitializer {
 
 			return 1;
 		}));
-
-		dispatcher.register(ClientCommands.literal("director_dummy").executes(ctx -> {
-			if (DirectorState.CURRENT_MOVIE == null) {
-				ctx.getSource().sendFeedback(Component.literal("No movie active. Please select a movie before summoning dummies."));
-				return 0;
-			}
-
-			if (DirectorState.CURRENT_SCENE == null) {
-				ctx.getSource().sendFeedback(Component.literal("No scene selected. Please select a scene before summoning dummies."));
-				return 0;
-			}
-
-			ClientLevel level = ctx.getSource().getLevel();
-			Vec3 pos = ctx.getSource().getPosition();
-
-			DummyEntity entity = new DummyEntity(ClientEntities.DUMMY, level);
-			entity.setPos(pos);
-			entity.setId(nextClientID());
-
-			DummyData data = new DummyData("New Dummy");
-			data.displayEntityID = BuiltInRegistries.ENTITY_TYPE.getKey(DirectorState.DEFAULT_DUMMY_ENTITY_TYPE).toString();
-
-			entity.data = data;
-			entity.displayEntityType = DirectorState.DEFAULT_DUMMY_ENTITY_TYPE;
-
-			DirectorState.CURRENT_SCENE.dummies.add(data);
-
-			level.addEntity(entity);
-
-			ScenePlaybackController.addDummyEntity(entity);
-
-			return 1;
-		}));
 	}
 
 	private void registerEntityRenderers() {
@@ -99,7 +66,12 @@ public class DirectorClient implements ClientModInitializer {
 			DirectorState.IS_ACTIVE = client.hasSingleplayerServer()
 		);
 
+		ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> DirectorState.reset());
+
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+			if (!DirectorState.IS_ACTIVE)
+				return;
+
 			if (openTimelineScreen) {
 				openTimelineScreen = false;
 				mc.gui.setScreen(new DirectorScreen(Component.empty()));

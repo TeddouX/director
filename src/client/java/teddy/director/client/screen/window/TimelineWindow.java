@@ -3,10 +3,12 @@ package teddy.director.client.screen.window;
 import imgui.*;
 import imgui.flag.*;
 import imgui.type.ImString;
+import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.screen.DirectorScreen;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.NameInputModal;
 
@@ -37,7 +39,7 @@ public class TimelineWindow {
 
     private static final String CREATE_TRACK_MODAL_NAME = "Create Track";
     private static final ImString createTrackNameInput = new ImString();
-    private static int currentSelectedTrackType = -1;
+    private static int currentSelectedTrackTypeIdx = -1;
     private static boolean hasEmptyCreateTrackNameInput = false;
     private static boolean hasNotSelectedTrackType = false;
 
@@ -103,9 +105,19 @@ public class TimelineWindow {
 
             if (selectedKeyframe != null)
                 selectedKeyframe.drawImGuiWindow();
+
+            if (rightClickMenuTrackIdx >= 0)
+                DirectorState.getTrack(rightClickMenuTrackIdx).drawEditWindow();
         }
 
         ImGui.end();
+    }
+
+    public static void reset() {
+        rightClickMenuTrackIdx = -1;
+        playheadTick = 0;
+        scrollTick = 0;
+        zoomValue = 1;
     }
 
     private static void drawMenuBar() {
@@ -295,7 +307,10 @@ public class TimelineWindow {
         boolean openDeleteTrackModal = false;
         boolean openRenameTrackModal = false;
         if (ImGui.beginPopup("track_name_right_click_menu")) {
-            if (ImGui.selectable("Edit"));
+            if (ImGui.selectable("Edit")) {
+                 AbstractTrack track = timelineTracks.get(rightClickMenuTrackIdx);
+                 track.showEditWindow();
+            }
 
             ImGui.separator();
 
@@ -314,7 +329,7 @@ public class TimelineWindow {
             deleteTrackModal.open();
 
         if (rightClickMenuTrackIdx != -1) {
-            String deleteTrackTitle = "Are you sure you want to delete track %s ?"
+            String deleteTrackTitle = "Are you sure you want to delete track \"%s\" ?"
                     .formatted(DirectorState.getTrackName(rightClickMenuTrackIdx));
 
             deleteTrackModal.draw(deleteTrackTitle, confirmed -> {
@@ -406,14 +421,14 @@ public class TimelineWindow {
                 ImGui.textColored(ERROR_TEXT_COLOR, "Please input a track name");
 
             List<String> trackTypes = TrackRegistry.getAllTrackTypeIDs();
-            String preview = currentSelectedTrackType >= 0 ? trackTypes.get(currentSelectedTrackType) : "Select a track type...";
+            String preview = currentSelectedTrackTypeIdx >= 0 ? trackTypes.get(currentSelectedTrackTypeIdx) : "Select a track type...";
 
             if (ImGui.beginCombo("##timeline_combo", preview)) {
                 for (int i = 0; i < trackTypes.size(); i++) {
                     String trackTypeId = trackTypes.get(i);
-                    boolean selected = i == currentSelectedTrackType;
+                    boolean selected = i == currentSelectedTrackTypeIdx;
                     if (ImGui.selectable(trackTypeId + "###" + i, selected))
-                        currentSelectedTrackType = i;
+                        currentSelectedTrackTypeIdx = i;
                 }
                 ImGui.endCombo();
             }
@@ -425,12 +440,12 @@ public class TimelineWindow {
 
             if (ImGui.button("Create")) {
                 hasEmptyCreateTrackNameInput = createTrackNameInput.isEmpty();
-                hasNotSelectedTrackType = currentSelectedTrackType == -1;
+                hasNotSelectedTrackType = currentSelectedTrackTypeIdx == -1;
 
                 if (!hasEmptyCreateTrackNameInput && !hasNotSelectedTrackType) {
                     DirectorState.createAndAddTrack(
                             createTrackNameInput.get(),
-                            TrackRegistry.getAllTrackTypeIDs().get(currentSelectedTrackType)
+                            TrackRegistry.getAllTrackTypeIDs().get(currentSelectedTrackTypeIdx)
                     );
 
                     resetCreateTrackModalData();
@@ -450,7 +465,7 @@ public class TimelineWindow {
     }
 
     private static void resetCreateTrackModalData() {
-        currentSelectedTrackType = -1;
+        currentSelectedTrackTypeIdx = -1;
         createTrackNameInput.clear();
     }
 

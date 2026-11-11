@@ -42,12 +42,12 @@ public class ScenePlaybackController {
 
     }
 
-    private static void summonAllDummies(List<DummyData> dummies) {
+    private static void summonAllDummies(Map<UUID, DummyData> dummies) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null)
             return;
 
-        for (DummyData dummyData : dummies)
+        for (DummyData dummyData : dummies.values())
             summonDummy(dummyData);
     }
 
@@ -92,7 +92,12 @@ public class ScenePlaybackController {
     }
 
     public static void removeDummyEntity(UUID uuid) {
-        dummyEntities.remove(uuid);
+        DummyEntity dummyEntity = dummyEntities.remove(uuid);
+
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+
+        level.removeEntity(dummyEntity.getId(), Entity.RemovalReason.DISCARDED);
     }
 
     public static void removeAllDummyEntities() {

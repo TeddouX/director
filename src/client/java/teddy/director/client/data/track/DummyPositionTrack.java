@@ -39,4 +39,9 @@ public class DummyPositionTrack extends AbstractTrack {
     public TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes() {
         return keyframes;
     }
+
+    @Override
+    public void drawEditWindow() {
+
+    }
 }
