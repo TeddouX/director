@@ -2,40 +2,36 @@ package teddy.director.client.screen;
 
 import com.mojang.blaze3d.platform.Window;
 import imgui.ImGui;
-import imgui.ImVec2;
-import imgui.flag.ImGuiCond;
-import imgui.flag.ImGuiWindowFlags;
-import imgui.type.ImString;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import teddy.director.Director;
-import teddy.director.client.DirectorState;
-import teddy.director.client.data.MovieData;
 import teddy.director.client.screen.window.MovieWindow;
 import teddy.director.client.screen.window.SceneWindow;
 import teddy.director.client.screen.window.TimelineWindow;
 
-import java.io.IOException;
-
 public class DirectorScreen extends Screen {
     private static boolean isInFreecam = false;
     private static boolean isMouseOverGUI = false;
+    private double lastMouseX = 0, lastMouseY = 0;
 
-    public static boolean ACTIVE = false;
+    public static boolean active = false;
 
     public DirectorScreen(Component title) {
         super(title);
 
-        ACTIVE = true;
+        active = true;
+
+        Freecam.copyPlayerCam();
     }
 
     @Override
     public void onClose() {
-        ACTIVE = false;
+        active = false;
 
         super.onClose();
     }
@@ -51,14 +47,12 @@ public class DirectorScreen extends Screen {
     }
 
     public static void renderImGui() {
-        if (!ACTIVE)
+        if (!active)
             return;
 
         isMouseOverGUI = ImGui.getIO().getWantCaptureMouse();
 
         ImGui.showDemoWindow(null);
-
-        handleFreecam();
 
         MovieWindow.draw();
         SceneWindow.draw();
@@ -67,10 +61,18 @@ public class DirectorScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 1 && !isMouseOverGUI) {
-            Window win = Minecraft.getInstance().getWindow();
-            GLFW.glfwSetCursorPos(win.handle(), (double) win.getScreenWidth() / 2, (double) win.getScreenHeight() / 2);
+        if (event.button() == 1 && !isMouseOverGUI && !isInFreecam) {
+            Window win = this.minecraft.getWindow();
+            float middleX = (float) win.getWidth() / 2;
+            float middleY = (float) win.getHeight() / 2;
+
+            GLFW.glfwSetCursorPos(win.handle(), middleX, middleY);
             GLFW.glfwSetInputMode(win.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+
+            lastMouseX = MouseHandler.getScaledXPos(win, middleX);
+            lastMouseY = MouseHandler.getScaledYPos(win, middleY);
+
+            Freecam.toggle();
 
             isInFreecam = true;
         }
@@ -81,9 +83,12 @@ public class DirectorScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (event.button() == 1) {
-            Window win = Minecraft.getInstance().getWindow();
-            GLFW.glfwSetCursorPos(win.handle(), (double) win.getScreenWidth() / 2, (double) win.getScreenHeight() / 2);
+            Window win = this.minecraft.getWindow();
+
+            GLFW.glfwSetCursorPos(win.handle(), (float) win.getWidth() / 2, (float) win.getHeight() / 2);
             GLFW.glfwSetInputMode(win.handle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+
+            Freecam.toggle();
 
             isInFreecam = false;
         }
@@ -91,7 +96,22 @@ public class DirectorScreen extends Screen {
         return super.mouseReleased(event);
     }
 
-    private static void handleFreecam() {
+    @Override
+    public void mouseMoved(double x, double y) {
+        double dx = x - lastMouseX;
+        double dy = y - lastMouseY;
 
+        if (isInFreecam)
+            Freecam.rotateWithSens(this.minecraft, (float)dx, (float)dy);
+
+        lastMouseX = x;
+        lastMouseY = y;
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        Freecam.scrollWheel(scrollY);
+
+        return super.mouseScrolled(x, y, scrollX, scrollY);
     }
 }

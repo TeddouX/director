@@ -7,7 +7,7 @@ import teddy.director.client.access.LivingEntityStateAccess;
 import teddy.director.client.entity.rendering.DummyEntityAnimationState;
 
 @Mixin(LivingEntityRenderState.class)
-public class LivingEntityRenderStateMixin implements LivingEntityStateAccess {
+public abstract class LivingEntityRenderStateMixin implements LivingEntityStateAccess {
     @Unique private DummyEntityAnimationState director$animState;
 
     @Override

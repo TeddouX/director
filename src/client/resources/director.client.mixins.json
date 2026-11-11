@@ -3,7 +3,10 @@
   "package": "teddy.director.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "CameraMixin",
     "EntityModelMixin",
+    "GameRendererMixin",
+    "ItemInHandRendererMixin",
     "LivingEntityRenderStateMixin"
   ],
   "injectors": {

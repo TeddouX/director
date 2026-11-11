@@ -23,8 +23,7 @@ import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.DummyEntityRenderer;
 import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.DirectorScreen;
-
-import java.util.UUID;
+import teddy.director.client.screen.Freecam;
 
 public class DirectorClient implements ClientModInitializer {
 	private static boolean openTimelineScreen = false;
@@ -106,7 +105,7 @@ public class DirectorClient implements ClientModInitializer {
 				mc.gui.setScreen(new DirectorScreen(Component.empty()));
 			}
 
-			if (DirectorKeybinds.openDirectorUIKey.isDown() && !DirectorScreen.ACTIVE)
+			if (DirectorKeybinds.openDirectorUIKey.isDown() && !DirectorScreen.active)
 				mc.gui.setScreen(new DirectorScreen(Component.empty()));
 		});
 	}

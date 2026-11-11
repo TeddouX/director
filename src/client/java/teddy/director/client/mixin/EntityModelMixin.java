@@ -13,7 +13,7 @@ import teddy.director.client.entity.rendering.ModelPartLookup;
 import java.util.Map;
 
 @Mixin(Model.class)
-public class EntityModelMixin<S> {
+public abstract class EntityModelMixin<S> {
     @Inject(method = "setupAnim", at = @At("TAIL"))
     private void director$applyPartTransforms(S state, CallbackInfo ci) {
         if (!(state instanceof LivingEntityStateAccess access))
