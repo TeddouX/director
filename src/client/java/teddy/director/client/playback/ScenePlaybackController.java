@@ -79,6 +79,7 @@ public class ScenePlaybackController {
         dummyEntity.data = dummy;
         dummyEntity.displayEntityType = entityType;
 
+        dummyEntity.setPos(dummy.pos);
         dummyEntity.setId(DirectorClient.nextClientID());
 
         level.addEntity(dummyEntity);

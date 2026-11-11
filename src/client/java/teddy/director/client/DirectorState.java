@@ -11,6 +11,7 @@ import teddy.director.client.data.TimelineData;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.playback.ScenePlaybackController;
+import teddy.director.client.screen.Freecam;
 import teddy.director.client.utils.Named;
 
 import java.util.List;
@@ -90,6 +91,7 @@ public class DirectorState {
 
         DummyData dummyData = new DummyData(name);
         dummyData.displayEntityID = BuiltInRegistries.ENTITY_TYPE.getKey(displayEntityType).toString();
+        dummyData.pos = Freecam.pos;
 
         CURRENT_SCENE.dummies.add(dummyData);
         ScenePlaybackController.summonDummy(dummyData);
