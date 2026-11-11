@@ -10,16 +10,13 @@ import teddy.director.Director;
 import teddy.director.client.DirectorClient;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
-import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
 import teddy.director.client.data.TimelineData;
+import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.entity.ClientEntities;
 import teddy.director.client.entity.DummyEntity;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class ScenePlaybackController {
     public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
@@ -39,7 +36,13 @@ public class ScenePlaybackController {
     }
 
     public static void update(int tick) {
+        if (DirectorState.CURRENT_SCENE == null) return;
 
+        for (TimelineData timeline : DirectorState.CURRENT_SCENE.timelines) {
+            for (AbstractTrack track : timeline.tracks) {
+                track.update(tick);
+            }
+        }
     }
 
     private static void summonAllDummies(Map<UUID, DummyData> dummies) {

@@ -31,11 +31,13 @@ public abstract class AbstractTrack extends Named {
         this.name = obj.get("name").getAsString();
     }
 
+    public abstract void update(int tick);
+
     public abstract AbstractKeyframe createKeyframe(int tick);
 
     public abstract TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes();
 
-    public KeyframePair getKeyframesAround(int tick) {
+    protected KeyframePair getKeyframesAround(int tick) {
         Map.Entry<Integer, ? extends AbstractKeyframe> lower  = getKeyframes().floorEntry(tick);
         Map.Entry<Integer, ? extends AbstractKeyframe> higher = getKeyframes().ceilingEntry(tick);
 

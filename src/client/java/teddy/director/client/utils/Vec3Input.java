@@ -8,21 +8,15 @@ import java.util.function.Consumer;
 public class Vec3Input {
     private final String label;
     private final float[] value = new float[]{0, 0, 0};
+    private final float speed;
 
-    public Vec3Input(String label) {
+    public Vec3Input(String label, float speed) {
         this.label = label;
-    }
-
-    public Vec3Input(String label, Vec3 value) {
-        this.label = label;
-
-        this.value[0] = (float)value.x;
-        this.value[1] = (float)value.y;
-        this.value[2] = (float)value.z;
+        this.speed = speed;
     }
 
     public void draw(Consumer<Vec3> onChange) {
-        if (ImGui.dragFloat3(label, value))
+        if (ImGui.dragFloat3(label, value, speed))
             onChange.accept(getValue());
     }
 

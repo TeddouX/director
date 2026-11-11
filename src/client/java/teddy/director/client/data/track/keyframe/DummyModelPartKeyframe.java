@@ -5,12 +5,11 @@ import net.minecraft.world.phys.Vec3;
 import teddy.director.client.utils.Vec3Input;
 
 public class DummyModelPartKeyframe extends AbstractKeyframe {
-    public String modelPartKey = "";
     public Vec3 position = new Vec3(0, 0, 0);
     public Vec3 rotation = new Vec3(0, 0, 0);
 
-    private final transient Vec3Input posInput = new Vec3Input("Position");
-    private final transient Vec3Input rotInput = new Vec3Input("Rotation");
+    private final transient Vec3Input posInput = new Vec3Input("Position", 0.01f);
+    private final transient Vec3Input rotInput = new Vec3Input("Rotation", 0.01f);
 
     public DummyModelPartKeyframe() {
         super();
@@ -29,9 +28,6 @@ public class DummyModelPartKeyframe extends AbstractKeyframe {
             drawImGuiWindowContents();
 
             ImGui.separatorText("Edit model part");
-
-            // TODO : combo somehow
-            ImGui.text("hop hip hop");
 
             posInput.draw(pos -> position = pos);
             rotInput.draw(rot -> rotation = rot);

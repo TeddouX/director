@@ -72,6 +72,8 @@ public class DirectorClient implements ClientModInitializer {
 			if (!DirectorState.IS_ACTIVE)
 				return;
 
+			ScenePlaybackController.update(0);
+
 			if (openTimelineScreen) {
 				openTimelineScreen = false;
 				mc.gui.setScreen(new DirectorScreen(Component.empty()));

@@ -73,7 +73,6 @@ public class Freecam {
     }
 
     public static void scrollWheel(double value) {
-        Director.LOGGER.info("{}", value);
         speed += value;
         speed = Math.clamp(speed, 1, 100);
     }

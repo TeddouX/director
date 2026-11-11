@@ -29,6 +29,11 @@ public class DummyPositionTrack extends AbstractTrack {
     }
 
     @Override
+    public void update(int tick) {
+
+    }
+
+    @Override
     public AbstractKeyframe createKeyframe(int tick) {
         DummyPositionKeyframe kf = new DummyPositionKeyframe(tick);
         keyframes.put(tick, kf);

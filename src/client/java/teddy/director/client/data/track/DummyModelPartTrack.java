@@ -4,10 +4,20 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.phys.Vec3;
+import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 import teddy.director.client.data.track.keyframe.DummyModelPartKeyframe;
+import teddy.director.client.data.track.keyframe.KeyframePair;
+import teddy.director.client.entity.DummyEntity;
+import teddy.director.client.entity.rendering.ModelPartLookup;
+import teddy.director.client.playback.ScenePlaybackController;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -17,6 +27,9 @@ public class DummyModelPartTrack extends AbstractTrack {
 
     private TreeMap<Integer, DummyModelPartKeyframe> keyframes = new TreeMap<>();
     private List<UUID> controlledDummies = new ArrayList<>();
+    private String dummyEntityTypeId = "";
+    private EntityType<?> dummyEntityType = null;
+    private String dummyModelPart = "";
 
     @Override
     public String getTypeID() {
@@ -29,6 +42,8 @@ public class DummyModelPartTrack extends AbstractTrack {
 
         obj.add("keyframes", gson.toJsonTree(keyframes));
         obj.add("controlled_dummies", gson.toJsonTree(controlledDummies));
+        obj.addProperty("controlled_entity_type", dummyEntityTypeId);
+        obj.addProperty("controlled_model_part", dummyModelPart);
     }
 
     @Override
@@ -40,6 +55,45 @@ public class DummyModelPartTrack extends AbstractTrack {
 
         this.keyframes = gson.fromJson(obj.get("keyframes"), keyframesTy);
         this.controlledDummies = gson.fromJson(obj.get("controlled_dummies"), dummyUUIDsTy);
+        this.dummyEntityTypeId = obj.get("controlled_entity_type").getAsString();
+        this.dummyModelPart = obj.get("controlled_model_part").getAsString();
+    }
+
+    @Override
+    public void update(int tick) {
+        if (keyframes.isEmpty())
+            return;
+
+        KeyframePair keyframes = getKeyframesAround(tick);
+        Vec3 lerpedPos;
+        Vec3 lerpedRot;
+
+        DummyModelPartKeyframe before = (DummyModelPartKeyframe) keyframes.before();
+        DummyModelPartKeyframe after = (DummyModelPartKeyframe) keyframes.after();
+        if (before == null && after == null) {
+            return;
+        }
+        else if (after == null) {
+            lerpedPos = before.position;
+            lerpedRot = before.rotation;
+        }
+        else if (before == null) {
+            lerpedPos = after.position;
+            lerpedRot = after.rotation;
+        }
+        else {
+            int dBefAf = after.tick - before.tick;
+            int dBefTick = tick - before.tick;
+            float x = (float)dBefTick / dBefAf;
+
+            lerpedPos = before.position.lerp(after.position, x);
+            lerpedRot = before.rotation.lerp(after.rotation, x);
+        }
+
+        for (UUID controlledDummyUUID : controlledDummies) {
+            DummyEntity dummyEntity = ScenePlaybackController.dummyEntities.get(controlledDummyUUID);
+            dummyEntity.updateModelPart(dummyModelPart, lerpedPos, lerpedRot);
+        }
     }
 
     @Override
@@ -68,6 +122,9 @@ public class DummyModelPartTrack extends AbstractTrack {
 
         ImGui.separatorText("Controlled Dummies");
 
+        if (!controlledDummies.isEmpty())
+            ImGui.text("Controlled dummy entity type: %s".formatted(dummyEntityTypeId));
+
         float btnSize = ImGui.getFrameHeight();
         float padding = ImGui.getStyle().getWindowPaddingX();
 
@@ -82,6 +139,13 @@ public class DummyModelPartTrack extends AbstractTrack {
                 if (controlledDummies.contains(dummy.uuid))
                     continue;
 
+                boolean showWarnOnAdd = false;
+                if (!dummyEntityTypeId.isEmpty() && !Objects.equals(dummyEntityTypeId, dummy.displayEntityID)) {
+                    if (controlledDummies.isEmpty())
+                        showWarnOnAdd = true;
+                    else continue;
+                }
+
                 anyShown = true;
                 ImGui.pushID(i);
 
@@ -89,8 +153,12 @@ public class DummyModelPartTrack extends AbstractTrack {
                 ImGui.text(dummy.name);
 
                 ImGui.sameLine(ImGui.getWindowWidth() - btnSize - padding);
-                if (ImGui.button("+", btnSize, btnSize))
-                    controlledDummies.add(dummy.uuid);
+                if (ImGui.button("+###%s".formatted(dummy.uuid), btnSize, btnSize)) {
+                    if (showWarnOnAdd)
+                        Director.LOGGER.info("bla");
+                    else
+                        controlledDummies.add(dummy.uuid);
+                }
 
                 ImGui.popID();
             }
@@ -130,6 +198,27 @@ public class DummyModelPartTrack extends AbstractTrack {
             ImGui.treePop();
         }
 
+        ImGui.separatorText("Controlled model part");
+
+        EntityType<?> entityType = getDummyEntityType();
+        if (entityType != null) {
+            Model<?> dummyModel = ModelPartLookup.getEntityModel(entityType);
+            if (ImGui.beginCombo("Model part", dummyModelPart.isEmpty() ? "Select a model part..." : dummyModelPart)) {
+                for (String modelPart : ModelPartLookup.get(dummyModel).keySet()) {
+                    if (ImGui.selectable(modelPart, dummyModelPart.equals(modelPart)))
+                        dummyModelPart = modelPart;
+                }
+
+                ImGui.endCombo();
+            }
+        }
+
         ImGui.end();
+    }
+
+    private EntityType<?> getDummyEntityType() {
+        if (dummyEntityType == null && !dummyEntityTypeId.isEmpty())
+            dummyEntityType = Director.entityTypeFromStringId(dummyEntityTypeId);
+        return dummyEntityType;
     }
 }

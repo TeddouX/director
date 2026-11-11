@@ -282,8 +282,10 @@ public class SceneWindow {
 
     private static void resetDummyEditWindowData() {
         dummyRenameImString.clear();
+
         selectedDummy = null;
         selectedEntityType = null;
+
         ENTITY_TYPE_COMBO.setSelectedItemIdx(-1);
     }
 
