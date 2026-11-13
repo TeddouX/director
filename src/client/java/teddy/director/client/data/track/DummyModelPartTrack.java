@@ -57,6 +57,9 @@ public class DummyModelPartTrack extends AbstractTrack {
         this.controlledDummies = gson.fromJson(obj.get("controlled_dummies"), dummyUUIDsTy);
         this.dummyEntityTypeId = obj.get("controlled_entity_type").getAsString();
         this.dummyModelPart = obj.get("controlled_model_part").getAsString();
+
+        for (DummyModelPartKeyframe kf : this.keyframes.values())
+            kf.setParentTrack(this);
     }
 
     @Override
@@ -84,7 +87,9 @@ public class DummyModelPartTrack extends AbstractTrack {
         else {
             int dBefAf = after.tick - before.tick;
             int dBefTick = tick - before.tick;
-            float x = (float)dBefTick / dBefAf;
+
+            float x = dBefAf == 0 ? 0f : (float) dBefTick / dBefAf;
+            x = Math.clamp(x, 0f, 1f);
 
             lerpedPos = before.position.lerp(after.position, x);
             lerpedRot = before.rotation.lerp(after.rotation, x);
@@ -100,12 +105,25 @@ public class DummyModelPartTrack extends AbstractTrack {
     public AbstractKeyframe createKeyframe(int tick) {
         DummyModelPartKeyframe kf = new DummyModelPartKeyframe(tick);
         keyframes.put(tick, kf);
+        kf.setParentTrack(this);
+
         return kf;
     }
 
     @Override
     public TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes() {
         return keyframes;
+    }
+
+    @Override
+    public void moveKeyframe(int fromTick, int toTick) {
+        if (fromTick == toTick) return;
+
+        DummyModelPartKeyframe kf = keyframes.remove(fromTick);
+        if (kf == null) return;
+
+        kf.tick = toTick;
+        keyframes.put(toTick, kf);
     }
 
     @Override
@@ -217,6 +235,9 @@ public class DummyModelPartTrack extends AbstractTrack {
     }
 
     private EntityType<?> getDummyEntityType() {
+        if (dummyEntityTypeId.isEmpty() && !controlledDummies.isEmpty())
+            dummyEntityTypeId = DirectorState.getDummy(controlledDummies.getFirst()).displayEntityID;
+
         if (dummyEntityType == null && !dummyEntityTypeId.isEmpty())
             dummyEntityType = Director.entityTypeFromStringId(dummyEntityTypeId);
         return dummyEntityType;

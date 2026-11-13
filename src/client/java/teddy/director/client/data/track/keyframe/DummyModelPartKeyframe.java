@@ -2,6 +2,7 @@ package teddy.director.client.data.track.keyframe;
 
 import imgui.ImGui;
 import net.minecraft.world.phys.Vec3;
+import teddy.director.client.data.track.DummyModelPartTrack;
 import teddy.director.client.utils.Vec3Input;
 
 public class DummyModelPartKeyframe extends AbstractKeyframe {

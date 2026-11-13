@@ -37,6 +37,8 @@ public abstract class AbstractTrack extends Named {
 
     public abstract TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes();
 
+    public abstract void moveKeyframe(int fromTick, int toTick);
+
     protected KeyframePair getKeyframesAround(int tick) {
         Map.Entry<Integer, ? extends AbstractKeyframe> lower  = getKeyframes().floorEntry(tick);
         Map.Entry<Integer, ? extends AbstractKeyframe> higher = getKeyframes().ceilingEntry(tick);

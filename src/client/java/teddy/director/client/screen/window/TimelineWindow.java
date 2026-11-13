@@ -8,11 +8,14 @@ import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.DirectorScreen;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.NameInputModal;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
@@ -156,8 +159,10 @@ public class TimelineWindow {
             if (ImGui.isMouseDown(ImGuiMouseButton.Left)) {
                 isMovingPlayhead = true;
 
-                if (mousePos.x >= trackStartPosX && mousePos.x <= windowSize.x + windowOrigin.x)
+                if (mousePos.x >= trackStartPosX && mousePos.x <= windowSize.x + windowOrigin.x) {
                     playheadTick = xToTick(mousePos.x);
+                    ScenePlaybackController.update(playheadTick);
+                }
             }
         }
 
@@ -271,7 +276,15 @@ public class TimelineWindow {
                 if (isHoveringKf && ImGui.isMouseDown(ImGuiMouseButton.Left) && !isMovingPlayhead) {
                     openKeyframeWindow(kf);
 
-                    kf.tick = xToTick(mousePos.x);
+//                    kf.tick = xToTick(mousePos.x);
+//
+//                    @SuppressWarnings("unchecked")
+//                    Map<Integer, AbstractKeyframe> m = (Map<Integer, AbstractKeyframe>) track.getKeyframes();
+//
+//                    pendingKfMoves.add(() -> {
+//                        AbstractKeyframe deleted = m.remove(kf.tick);
+//                        m.put(kf.tick, deleted);
+//                    });
 
                     // Draw the selection outline
                     dl.addQuad(

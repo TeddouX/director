@@ -46,6 +46,11 @@ public class DummyPositionTrack extends AbstractTrack {
     }
 
     @Override
+    public void moveKeyframe(int fromTick, int toTick) {
+
+    }
+
+    @Override
     public void drawEditWindow() {
 
     }
