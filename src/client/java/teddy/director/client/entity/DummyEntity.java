@@ -4,7 +4,9 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -37,6 +39,11 @@ public class DummyEntity extends Entity {
                         (float) newRot.x, (float) newRot.y, (float) newRot.z
                 )
         );
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return displayEntityType.getDimensions();
     }
 
     @Override

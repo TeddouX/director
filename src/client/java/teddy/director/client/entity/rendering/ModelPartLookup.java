@@ -18,7 +18,7 @@ import java.util.WeakHashMap;
 
 public class ModelPartLookup {
     private static final Map<Model<?>, Map<String, ModelPart>> MODEL_PARTS_CACHE = new WeakHashMap<>();
-    private static final Map<EntityType<?>, Model> MODEL_CACHE = new WeakHashMap<>();
+    private static final Map<EntityType<?>, Model<?>> MODEL_CACHE = new WeakHashMap<>();
 
     public static Map<String, ModelPart> get(Model<?> model) {
         return MODEL_PARTS_CACHE.computeIfAbsent(model, m -> {

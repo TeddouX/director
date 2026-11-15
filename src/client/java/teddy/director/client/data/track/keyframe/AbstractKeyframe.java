@@ -32,7 +32,7 @@ public abstract class AbstractKeyframe {
         ImGui.separator();
 
         long[] ptr = new long[]{ms};
-        ImGui.dragScalar("Millisecond", ptr, 1, 0, Integer.MAX_VALUE);
+        ImGui.dragScalar("Millisecond", ptr, 20, 0, Integer.MAX_VALUE);
 
         track.moveKeyframe(this.ms, ptr[0]);
     }

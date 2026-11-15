@@ -32,7 +32,7 @@ public class ScenePlaybackController {
             summonAllDummies(newData.dummies);
 
             // Set everything to its original state
-            updataMilli(0);
+            updateMilli(0);
         }
     }
 
@@ -58,10 +58,10 @@ public class ScenePlaybackController {
         if (!running) return;
 
         currSceneMs += delta;
-        updataMilli(currSceneMs);
+        updateMilli(currSceneMs);
     }
 
-    public static void updataMilli(long ms) {
+    public static void updateMilli(long ms) {
         if (DirectorState.CURRENT_SCENE == null) return;
 
         for (TimelineData timeline : DirectorState.CURRENT_SCENE.timelines) {
@@ -110,10 +110,15 @@ public class ScenePlaybackController {
 
         dummyEntity.setPos(dummy.pos);
         dummyEntity.setId(DirectorClient.nextClientID());
+        dummyEntity.refreshDimensions();
 
         level.addEntity(dummyEntity);
 
         dummyEntities.put(dummy.uuid, dummyEntity);
+    }
+
+    public static DummyEntity getDummyEntity(UUID uuid) {
+        return dummyEntities.get(uuid);
     }
 
     public static void removeDummyEntity(UUID uuid) {

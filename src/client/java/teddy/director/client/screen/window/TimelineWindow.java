@@ -3,15 +3,22 @@ package teddy.director.client.screen.window;
 import imgui.*;
 import imgui.flag.*;
 import imgui.type.ImString;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.NameInputModal;
 
 import java.util.List;
+import java.util.Optional;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
@@ -170,7 +177,7 @@ public class TimelineWindow {
 
                 if (mousePos.x >= trackStartPosX && mousePos.x <= windowSize.x + windowOrigin.x) {
                     playheadMs = xToMs(mousePos.x);
-                    ScenePlaybackController.updataMilli(playheadMs);
+                    ScenePlaybackController.updateMilli(playheadMs);
                 }
             }
         }

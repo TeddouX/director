@@ -46,6 +46,11 @@ public class DirectorScreen extends Screen {
         return !isInFreecam;
     }
 
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
     public static void renderImGui() {
         if (!active)
             return;
