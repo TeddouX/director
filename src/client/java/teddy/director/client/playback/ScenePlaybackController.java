@@ -20,27 +20,53 @@ import java.util.*;
 
 public class ScenePlaybackController {
     public static Map<UUID, DummyEntity> dummyEntities = new HashMap<>();
+    private static long currSceneMs = 0;
+    private static boolean running = false;
 
     public static void refreshScene() {
         SceneData newData = DirectorState.CURRENT_SCENE;
 
         removeAllDummyEntities();
-        dummyEntities.clear();
 
         if (newData != null) {
             summonAllDummies(newData.dummies);
 
             // Set everything to its original state
-            update(0);
+            updataMilli(0);
         }
     }
 
-    public static void update(int tick) {
+    public static void startPlayback(long ms) {
+        currSceneMs = ms;
+        running = true;
+    }
+
+    public static void pausePlayback() {
+        running = false;
+    }
+
+    public static long playbackCurrMilli() {
+        if (!running) return -1;
+        return currSceneMs;
+    }
+
+    public static boolean playbackRunning() {
+        return running;
+    }
+
+    public static void frame(long delta) {
+        if (!running) return;
+
+        currSceneMs += delta;
+        updataMilli(currSceneMs);
+    }
+
+    public static void updataMilli(long ms) {
         if (DirectorState.CURRENT_SCENE == null) return;
 
         for (TimelineData timeline : DirectorState.CURRENT_SCENE.timelines) {
             for (AbstractTrack track : timeline.tracks) {
-                track.update(tick);
+                track.update(ms);
             }
         }
     }
@@ -87,11 +113,7 @@ public class ScenePlaybackController {
 
         level.addEntity(dummyEntity);
 
-        addDummyEntity(dummyEntity);
-    }
-
-    public static void addDummyEntity(DummyEntity entity) {
-        dummyEntities.put(entity.data.uuid, entity);
+        dummyEntities.put(dummy.uuid, dummyEntity);
     }
 
     public static void removeDummyEntity(UUID uuid) {
@@ -107,5 +129,6 @@ public class ScenePlaybackController {
         for (DummyEntity entity : dummyEntities.values()) {
             Minecraft.getInstance().level.removeEntity(entity.getId(), Entity.RemovalReason.DISCARDED);
         }
+        dummyEntities.clear();
     }
 }

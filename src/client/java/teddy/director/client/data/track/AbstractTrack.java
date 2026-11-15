@@ -31,17 +31,17 @@ public abstract class AbstractTrack extends Named {
         this.name = obj.get("name").getAsString();
     }
 
-    public abstract void update(int tick);
+    public abstract void update(long ms);
 
-    public abstract AbstractKeyframe createKeyframe(int tick);
+    public abstract AbstractKeyframe createKeyframe(long ms);
 
-    public abstract TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes();
+    public abstract TreeMap<Long, ? extends AbstractKeyframe> getKeyframes();
 
-    public abstract void moveKeyframe(int fromTick, int toTick);
+    public abstract void moveKeyframe(long fromMs, long toMs);
 
-    protected KeyframePair getKeyframesAround(int tick) {
-        Map.Entry<Integer, ? extends AbstractKeyframe> lower  = getKeyframes().floorEntry(tick);
-        Map.Entry<Integer, ? extends AbstractKeyframe> higher = getKeyframes().ceilingEntry(tick);
+    protected KeyframePair getKeyframesAround(long ms) {
+        Map.Entry<Long, ? extends AbstractKeyframe> lower  = getKeyframes().floorEntry(ms);
+        Map.Entry<Long, ? extends AbstractKeyframe> higher = getKeyframes().ceilingEntry(ms);
 
         return new KeyframePair(
                 lower == null ? null : lower.getValue(),

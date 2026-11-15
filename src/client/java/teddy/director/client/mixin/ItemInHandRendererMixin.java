@@ -13,7 +13,15 @@ import teddy.director.client.screen.DirectorScreen;
 @Mixin(ItemInHandRenderer.class)
 public abstract class ItemInHandRendererMixin {
     @Inject(method = "renderPlayerArm", at = @At("HEAD"), cancellable = true)
-    private void director$hidePlayerArm(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, float inverseArmHeight, float attackValue, HumanoidArm arm, CallbackInfo ci) {
+    private void director$hidePlayerArm(
+            PoseStack poseStack,
+            SubmitNodeCollector submitNodeCollector,
+            int lightCoords,
+            float inverseArmHeight,
+            float attackValue,
+            HumanoidArm arm,
+            CallbackInfo ci
+    ) {
         if (DirectorScreen.active)
             ci.cancel();
     }

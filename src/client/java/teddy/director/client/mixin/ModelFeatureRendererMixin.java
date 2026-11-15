@@ -38,7 +38,8 @@ public abstract class ModelFeatureRendererMixin<S> {
             if (part == null) return;
 
             part.x += transform.dx();
-            part.y += transform.dy();
+            // +Y is down
+            part.y -= transform.dy();
             part.z += transform.dz();
 
             part.xRot += (float) Math.toRadians(transform.rx());

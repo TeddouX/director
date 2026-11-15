@@ -8,12 +8,12 @@ public abstract class AbstractKeyframe {
     private transient AbstractTrack track;
     public transient ImBoolean windowOpen = new ImBoolean(true);
 
-    public int tick;
+    public long ms;
 
     protected AbstractKeyframe() {}
 
-    public AbstractKeyframe(int tick) {
-        this.tick = tick;
+    public AbstractKeyframe(long ms) {
+        this.ms = ms;
     }
 
     public abstract void drawImGuiWindow();
@@ -31,9 +31,9 @@ public abstract class AbstractKeyframe {
 
         ImGui.separator();
 
-        int[] ptr = new int[]{tick};
-        ImGui.dragInt("Tick", ptr, 1, 0, Integer.MAX_VALUE);
+        long[] ptr = new long[]{ms};
+        ImGui.dragScalar("Millisecond", ptr, 1, 0, Integer.MAX_VALUE);
 
-        track.moveKeyframe(this.tick, ptr[0]);
+        track.moveKeyframe(this.ms, ptr[0]);
     }
 }

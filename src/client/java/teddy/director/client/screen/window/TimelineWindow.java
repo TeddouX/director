@@ -3,19 +3,15 @@ package teddy.director.client.screen.window;
 import imgui.*;
 import imgui.flag.*;
 import imgui.type.ImString;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 import teddy.director.client.playback.ScenePlaybackController;
-import teddy.director.client.screen.DirectorScreen;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.NameInputModal;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
@@ -25,7 +21,7 @@ public class TimelineWindow {
     private static final float PLAYHEAD_DRAGGABLE_AREA_HEIGHT = 15;
     private static final float PLAYHEAD_WIDTH = 2;
     private static boolean isMovingPlayhead = false;
-    private static int playheadTick = 0;
+    private static long playheadMs = 0;
 
     private static final int TRACK_SEPARATOR_COLOR = ImColor.rgba(50, 50, 50, 255);
     private static final int KEYFRAME_SELECT_COLOR = ImColor.rgba(50, 80, 255, 255);
@@ -46,15 +42,15 @@ public class TimelineWindow {
     private static boolean hasEmptyCreateTrackNameInput = false;
     private static boolean hasNotSelectedTrackType = false;
 
-    private static final float TICK_BASE_PIXEL_SEPARATION_SIZE = 4;
-    private static final float TICK_LINE_HEIGHT = 6;
+    private static final float MS_BASE_PIXEL_SEPARATION_SIZE = 4;
+    private static final float MS_LINE_HEIGHT = 6;
     private static final float SECOND_LINE_HEIGHT = 10;
 
-    private static final float SCROLL_TICK_SENS = 4f;
-    private static int scrollTick = 0;
+    private static final float SCROLL_MS_SENS = 100f;
+    private static long scrollMs = 0;
 
     private static final float ZOOM_SENS = 0.2f;
-    private static float zoomValue = 1;
+    private static float zoomValue = 34;
 
     private static boolean hovered = false;
     private static ImVec2 mousePos = new ImVec2();
@@ -62,8 +58,7 @@ public class TimelineWindow {
     public static void draw() {
         int windowFlags = 0;
 
-        boolean hasTimeline = DirectorState.CURRENT_TIMELINE != null;
-        if (hasTimeline)
+        if (DirectorState.CURRENT_TIMELINE != null)
             windowFlags |= ImGuiWindowFlags.MenuBar;
 
         if (ImGui.begin("Timeline", null, windowFlags)) {
@@ -100,7 +95,7 @@ public class TimelineWindow {
             handleTimelineScrollAndZoom();
 
             handleTracks(dl, origin, size);
-            drawTicks(dl, origin, size);
+            drawMillis(dl, origin, size);
             handlePlayhead(dl, origin, size);
 
             drawCreateTrackModal();
@@ -118,14 +113,26 @@ public class TimelineWindow {
 
     public static void reset() {
         rightClickMenuTrackIdx = -1;
-        playheadTick = 0;
-        scrollTick = 0;
-        zoomValue = 1;
+        playheadMs = 0;
+        scrollMs = 0;
+        zoomValue = 34;
     }
 
     private static void drawMenuBar() {
         boolean openCreateTrackPopup = false;
         if (ImGui.beginMenuBar()) {
+            if (ImGui.beginMenu("Playback")) {
+                if (ImGui.menuItem("Start", "Ctrl+Space"))
+                    ScenePlaybackController.startPlayback(playheadMs);
+
+                if (ImGui.menuItem("Pause", "Ctrl+Space"))
+                    ScenePlaybackController.pausePlayback();
+
+                if (ImGui.menuItem("Beginning", "Ctrl+Left Arrow"));
+
+                ImGui.endMenu();
+            }
+
             if (ImGui.beginMenu("Track")) {
                 if (ImGui.menuItem("New"))
                     openCreateTrackPopup = true;
@@ -147,28 +154,30 @@ public class TimelineWindow {
             isMovingPlayhead = false;
             ImGui.setMouseCursor(ImGuiMouseCursor.Arrow);
         }
-
         boolean mouseIsInDraggableArea = mouseIsInRect(
                 trackStartPosX, windowOrigin.y,
                 windowSize.x + windowOrigin.x, PLAYHEAD_DRAGGABLE_AREA_HEIGHT + windowOrigin.y
         );
 
-        if (isMovingPlayhead || (hovered && mouseIsInDraggableArea)) {
+        if (ScenePlaybackController.playbackRunning()) {
+            playheadMs = ScenePlaybackController.playbackCurrMilli();
+        }
+        else if (isMovingPlayhead || (hovered && mouseIsInDraggableArea)) {
             ImGui.setMouseCursor(ImGuiMouseCursor.ResizeEW);
 
             if (ImGui.isMouseDown(ImGuiMouseButton.Left)) {
                 isMovingPlayhead = true;
 
                 if (mousePos.x >= trackStartPosX && mousePos.x <= windowSize.x + windowOrigin.x) {
-                    playheadTick = xToTick(mousePos.x);
-                    ScenePlaybackController.update(playheadTick);
+                    playheadMs = xToMs(mousePos.x);
+                    ScenePlaybackController.updataMilli(playheadMs);
                 }
             }
         }
 
         // Drawing the playhead
 
-        float playheadX = tickToX(playheadTick);
+        float playheadX = msToX(playheadMs);
         if (playheadX >= trackStartPosX && playheadX <= windowOrigin.x + windowSize.x)
         {
             dl.addLine(
@@ -253,7 +262,7 @@ public class TimelineWindow {
         trackY = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
         for (AbstractTrack track : DirectorState.CURRENT_TIMELINE.tracks) {
             for (AbstractKeyframe kf : track.getKeyframes().values()) {
-                float kfX = tickToX(kf.tick);
+                float kfX = msToX(kf.ms);
                 // Do not draw if the keyframe is out of bounds
                 if (kfX <= trackStartPosX || kfX > windowOrigin.x + windowSize.x)
                     continue;
@@ -310,9 +319,9 @@ public class TimelineWindow {
 
         if (ImGui.beginPopup("track_right_click_menu")) {
             if (ImGui.selectable("Add keyframe"))
-                createKeyframe(xToTick(ImGui.getWindowPos().x));
+                createKeyframe(xToMs(ImGui.getWindowPos().x));
             else if (ImGui.selectable("Add keyframe at playhead"))
-                createKeyframe(playheadTick);
+                createKeyframe(playheadMs);
 
             ImGui.endPopup();
         }
@@ -355,15 +364,15 @@ public class TimelineWindow {
         }
     }
 
-    private static void createKeyframe(int tick) {
+    private static void createKeyframe(long ms) {
         AbstractTrack track = DirectorState.getTrack(rightClickMenuTrackIdx);
-        AbstractKeyframe kf = track.createKeyframe(tick);
+        AbstractKeyframe kf = track.createKeyframe(ms);
 
         openKeyframeWindow(kf);
     }
 
-    private static void drawTicks(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
-        int numLines = scrollTick;
+    private static void drawMillis(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
+        long numLines = scrollMs;
         float separation = tickSeparation();
 
         for (int i = 0; ; i++) {
@@ -371,11 +380,17 @@ public class TimelineWindow {
             if (drawX >= windowOrigin.x + windowSize.x)
                 break;
 
+            if (numLines % 100 != 0)
+            {
+                numLines++;
+                continue;
+            }
+
             float lineHeight;
-            if (numLines % 20 == 0) {
+            if (numLines % 1000 == 0) {
                 lineHeight = SECOND_LINE_HEIGHT;
 
-                String secondsString = String.valueOf(numLines / 20);
+                String secondsString = String.valueOf(numLines / 1000);
                 ImVec2 textDims = ImGui.calcTextSize(secondsString);
 
                 dl.addText(
@@ -385,7 +400,7 @@ public class TimelineWindow {
                 );
             }
             else {
-                lineHeight = TICK_LINE_HEIGHT;
+                lineHeight = MS_LINE_HEIGHT;
             }
 
             float drawYBase = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
@@ -410,9 +425,9 @@ public class TimelineWindow {
             zoomValue = Math.max(0.1f, zoomValue);
         }
         else {
-            int rawScroll = (int) (mouseWheel * SCROLL_TICK_SENS);
-            scrollTick -= rawScroll;
-            scrollTick = Math.max(0, scrollTick);
+            int rawScroll = (int) (mouseWheel * SCROLL_MS_SENS);
+            scrollMs -= rawScroll;
+            scrollMs = Math.max(0, scrollMs);
         }
     }
 
@@ -488,14 +503,14 @@ public class TimelineWindow {
     }
 
     private static float tickSeparation() {
-        return TICK_BASE_PIXEL_SEPARATION_SIZE / zoomValue;
+        return MS_BASE_PIXEL_SEPARATION_SIZE / zoomValue;
     }
 
-    private static float tickToX(int tick) {
-        return trackStartPosX + (tick - scrollTick) * tickSeparation();
+    private static float msToX(long ms) {
+        return trackStartPosX + (ms - scrollMs) * tickSeparation();
     }
 
-    private static int xToTick(float screenX) {
-        return (int) Math.floor((screenX - trackStartPosX) / tickSeparation()) + scrollTick;
+    private static long xToMs(float screenX) {
+        return (long) Math.floor((screenX - trackStartPosX) / tickSeparation()) + scrollMs;
     }
 }

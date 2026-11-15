@@ -16,8 +16,8 @@ public class DummyModelPartKeyframe extends AbstractKeyframe {
         super();
     }
 
-    public DummyModelPartKeyframe(int tick) {
-        super(tick);
+    public DummyModelPartKeyframe(long ms) {
+        super(ms);
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.util.*;
 public class DummyModelPartTrack extends AbstractTrack {
     public static final String TYPE_ID = "dummy_model_part";
 
-    private TreeMap<Integer, DummyModelPartKeyframe> keyframes = new TreeMap<>();
+    private TreeMap<Long, DummyModelPartKeyframe> keyframes = new TreeMap<>();
     private List<UUID> controlledDummies = new ArrayList<>();
     private String dummyEntityTypeId = "";
     private EntityType<?> dummyEntityType = null;
@@ -50,7 +50,7 @@ public class DummyModelPartTrack extends AbstractTrack {
     public void load(JsonObject obj, Gson gson) {
         super.load(obj, gson);
 
-        Type keyframesTy = new TypeToken<TreeMap<Integer, DummyModelPartKeyframe>>(){}.getType();
+        Type keyframesTy = new TypeToken<TreeMap<Long, DummyModelPartKeyframe>>(){}.getType();
         Type dummyUUIDsTy = new TypeToken<List<UUID>>(){}.getType();
 
         this.keyframes = gson.fromJson(obj.get("keyframes"), keyframesTy);
@@ -63,11 +63,11 @@ public class DummyModelPartTrack extends AbstractTrack {
     }
 
     @Override
-    public void update(int tick) {
+    public void update(long ms) {
         if (keyframes.isEmpty())
             return;
 
-        KeyframePair keyframes = getKeyframesAround(tick);
+        KeyframePair keyframes = getKeyframesAround(ms);
         Vec3 lerpedPos;
         Vec3 lerpedRot;
 
@@ -85,8 +85,8 @@ public class DummyModelPartTrack extends AbstractTrack {
             lerpedRot = after.rotation;
         }
         else {
-            int dBefAf = after.tick - before.tick;
-            int dBefTick = tick - before.tick;
+            long dBefAf = after.ms - before.ms;
+            long dBefTick = ms - before.ms;
 
             float x = dBefAf == 0 ? 0f : (float) dBefTick / dBefAf;
             x = Math.clamp(x, 0f, 1f);
@@ -102,28 +102,28 @@ public class DummyModelPartTrack extends AbstractTrack {
     }
 
     @Override
-    public AbstractKeyframe createKeyframe(int tick) {
-        DummyModelPartKeyframe kf = new DummyModelPartKeyframe(tick);
-        keyframes.put(tick, kf);
+    public AbstractKeyframe createKeyframe(long ms) {
+        DummyModelPartKeyframe kf = new DummyModelPartKeyframe(ms);
+        keyframes.put(ms, kf);
         kf.setParentTrack(this);
 
         return kf;
     }
 
     @Override
-    public TreeMap<Integer, ? extends AbstractKeyframe> getKeyframes() {
+    public TreeMap<Long, ? extends AbstractKeyframe> getKeyframes() {
         return keyframes;
     }
 
     @Override
-    public void moveKeyframe(int fromTick, int toTick) {
-        if (fromTick == toTick) return;
+    public void moveKeyframe(long fromMs, long toMs) {
+        if (fromMs == toMs) return;
 
-        DummyModelPartKeyframe kf = keyframes.remove(fromTick);
+        DummyModelPartKeyframe kf = keyframes.remove(fromMs);
         if (kf == null) return;
 
-        kf.tick = toTick;
-        keyframes.put(toTick, kf);
+        kf.ms = toMs;
+        keyframes.put(toMs, kf);
     }
 
     @Override

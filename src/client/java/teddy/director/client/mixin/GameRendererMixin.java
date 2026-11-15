@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.Freecam;
 
 @Mixin(GameRenderer.class)
@@ -15,5 +16,9 @@ public abstract class GameRendererMixin {
         Minecraft mc = Minecraft.getInstance();
         if (Freecam.active)
             Freecam.update(mc);
+
+        float ticks = Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
+        long deltaMs = Math.round(ticks * 50f);
+        ScenePlaybackController.frame(deltaMs);
     }
 }
