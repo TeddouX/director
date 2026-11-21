@@ -24,7 +24,7 @@ public class ScenePlaybackController {
     private static boolean running = false;
 
     public static void refreshScene() {
-        SceneData newData = DirectorState.CURRENT_SCENE;
+        SceneData newData = DirectorState.currentScene;
 
         removeAllDummyEntities();
 
@@ -62,9 +62,9 @@ public class ScenePlaybackController {
     }
 
     public static void updateMilli(long ms) {
-        if (DirectorState.CURRENT_SCENE == null) return;
+        if (DirectorState.currentScene == null) return;
 
-        for (TimelineData timeline : DirectorState.CURRENT_SCENE.timelines) {
+        for (TimelineData timeline : DirectorState.currentScene.timelines) {
             for (AbstractTrack track : timeline.tracks) {
                 track.update(ms);
             }

@@ -15,6 +15,7 @@ public class SceneData extends Named {
     public UUID uuid;
     public List<TimelineData> timelines = new ArrayList<>();
     public Map<UUID, DummyData> dummies = new HashMap<>();
+    public CameraData camera;
 
     public SceneData() {
         super("");
@@ -35,6 +36,7 @@ public class SceneData extends Named {
         saveData.name = name;
         saveData.uuid = uuid;
         saveData.dummies = dummies;
+        saveData.camera = camera;
 
         for (TimelineData timelineData : timelines) {
             SaveData.TinyTimelineData tinyTimelineData = new SaveData.TinyTimelineData();
@@ -59,6 +61,7 @@ public class SceneData extends Named {
             sceneData.uuid = uuid;
             sceneData.name = saveData.name;
             sceneData.dummies = saveData.dummies;
+            sceneData.camera = saveData.camera;
 
             for (SaveData.TinyTimelineData tinyTimelineData : saveData.timelines) {
                 TimelineData timelineData = TimelineData.load(sceneFolderPath, tinyTimelineData.uuid, gson);
@@ -79,5 +82,6 @@ public class SceneData extends Named {
         public UUID uuid;
         public Map<UUID, DummyData> dummies = new HashMap<>();
         public List<TinyTimelineData> timelines = new ArrayList<>();
+        public CameraData camera;
     }
 }

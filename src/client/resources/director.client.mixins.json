@@ -6,8 +6,10 @@
     "CameraMixin",
     "GameRendererMixin",
     "ItemInHandRendererMixin",
+    "LevelRendererMixin",
     "LivingEntityRenderStateMixin",
-    "ModelFeatureRendererMixin"
+    "ModelFeatureRendererMixin",
+    "SectionOcclusionGraphMixin"
   ],
   "injectors": {
     "defaultRequire": 1

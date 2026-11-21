@@ -8,6 +8,7 @@ import net.minecraft.client.Options;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 import teddy.director.Director;
+import teddy.director.client.access.CameraAccess;
 
 public class Freecam {
     private static final double ORIG_SPEED = 15;
@@ -34,6 +35,13 @@ public class Freecam {
     }
 
     public static void update(Minecraft mc) {
+        if (DirectorScreen.active) {
+            CameraAccess cam = (CameraAccess) mc.gameRenderer.mainCamera();
+            cam.director$setRotation(yaw, pitch);
+            cam.director$setPosition(pos);
+            cam.director$overrideTransform();
+        }
+
         if (!active)
             return;
 

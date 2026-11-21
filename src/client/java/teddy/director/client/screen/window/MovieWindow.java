@@ -5,6 +5,7 @@ import imgui.flag.ImGuiWindowFlags;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
+import teddy.director.client.screen.window.scene.SceneWindow;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.FilteredCombo;
 import teddy.director.client.utils.NameInputModal;
@@ -35,11 +36,11 @@ public class MovieWindow {
             if (loadError)
                 ImGui.textColored(255, 0, 0, 255, "Failed to load movie. See logs for more info");
 
-            if (DirectorState.CURRENT_MOVIE == null) {
+            if (DirectorState.currentMovie == null) {
                 ImGui.text("No movie currently loaded");
             }
             else {
-                ImGui.text("Current movie: %s".formatted(DirectorState.CURRENT_MOVIE.name));
+                ImGui.text("Current movie: %s".formatted(DirectorState.currentMovie.name));
                 ImGui.button("Export...");
 
                 drawSceneControl();
@@ -75,7 +76,7 @@ public class MovieWindow {
                         if (ImGui.menuItem(saveData.name + "##" + saveData.uuid.toString())) {
                             try {
                                 DirectorState.reset();
-                                DirectorState.CURRENT_MOVIE = MovieData.load(saveData.uuid);
+                                DirectorState.currentMovie = MovieData.load(saveData.uuid);
 
                                 reset();
                             }
@@ -90,7 +91,7 @@ public class MovieWindow {
 
                 if (ImGui.menuItem("Save")) {
                     try {
-                        DirectorState.CURRENT_MOVIE.save();
+                        DirectorState.currentMovie.save();
                     }
                     catch (IOException _) {
                         saveError = true;
@@ -108,7 +109,7 @@ public class MovieWindow {
     }
 
     private static void drawSceneControl() {
-        List<SceneData> scenes = DirectorState.CURRENT_MOVIE.scenes;
+        List<SceneData> scenes = DirectorState.currentMovie.scenes;
 
         ImGui.separatorText("Scene");
 
@@ -161,7 +162,7 @@ public class MovieWindow {
             DELETE_SCENE_MODAL.draw(deleteSceneTitle, confirm -> {
                 if (confirm) {
                     DirectorState.deleteScene(currentSelectedSceneIdx);
-                    DirectorState.CURRENT_SCENE = null;
+                    DirectorState.currentScene = null;
 
                     SceneWindow.reset();
                     SCENES_COMBO.setSelectedItemIdx(-1);

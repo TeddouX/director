@@ -3,22 +3,15 @@ package teddy.director.client.screen.window;
 import imgui.*;
 import imgui.flag.*;
 import imgui.type.ImString;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.data.track.keyframe.AbstractKeyframe;
-import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.NameInputModal;
 
 import java.util.List;
-import java.util.Optional;
 
 public class TimelineWindow {
     private static final int WHITE_COLOR = ImColor.rgba(255, 255, 255, 255);
@@ -65,23 +58,23 @@ public class TimelineWindow {
     public static void draw() {
         int windowFlags = 0;
 
-        if (DirectorState.CURRENT_TIMELINE != null)
+        if (DirectorState.currentTimeline != null)
             windowFlags |= ImGuiWindowFlags.MenuBar;
 
         if (ImGui.begin("Timeline", null, windowFlags)) {
-            if (DirectorState.CURRENT_MOVIE == null) {
+            if (DirectorState.currentMovie == null) {
                 ImGui.text("Please load a movie to edit a timeline");
                 ImGui.end();
                 return;
             }
 
-            if (DirectorState.CURRENT_SCENE == null) {
+            if (DirectorState.currentScene == null) {
                 ImGui.text("Please select a scene to edit a timeline");
                 ImGui.end();
                 return;
             }
 
-            if (DirectorState.CURRENT_TIMELINE == null) {
+            if (DirectorState.currentTimeline == null) {
                 ImGui.text("Please select a timeline to edit");
                 ImGui.end();
                 return;
@@ -213,7 +206,7 @@ public class TimelineWindow {
                 TRACK_SEPARATOR_COLOR
         );
 
-        List<AbstractTrack> timelineTracks = DirectorState.CURRENT_TIMELINE.tracks;
+        List<AbstractTrack> timelineTracks = DirectorState.currentTimeline.tracks;
         for (AbstractTrack track : timelineTracks) {
             ImVec2 nameSize = ImGui.calcTextSize(track.name);
             trackStartPosX = Math.max(windowOrigin.x + nameSize.x, trackStartPosX);
@@ -267,7 +260,7 @@ public class TimelineWindow {
         trackEndPosY = trackY;
 
         trackY = windowOrigin.y + PLAYHEAD_DRAGGABLE_AREA_HEIGHT;
-        for (AbstractTrack track : DirectorState.CURRENT_TIMELINE.tracks) {
+        for (AbstractTrack track : DirectorState.currentTimeline.tracks) {
             for (AbstractKeyframe kf : track.getKeyframes().values()) {
                 float kfX = msToX(kf.ms);
                 // Do not draw if the keyframe is out of bounds

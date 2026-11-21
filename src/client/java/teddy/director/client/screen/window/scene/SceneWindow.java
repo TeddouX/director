@@ -1,4 +1,4 @@
-package teddy.director.client.screen.window;
+package teddy.director.client.screen.window.scene;
 
 import imgui.ImColor;
 import imgui.ImDrawList;
@@ -24,6 +24,7 @@ import teddy.director.client.data.TimelineData;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.Freecam;
+import teddy.director.client.screen.window.TimelineWindow;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.FilteredCombo;
 import teddy.director.client.utils.NameInputModal;
@@ -46,6 +47,8 @@ public class SceneWindow {
     private static final NameInputModal RENAME_TIMELINE_MODAL = new NameInputModal("Rename Timeline");
     private static final ConfirmModal DELETE_TIMELINE_MODAL = new ConfirmModal("Delete Timeline");
 
+    private static final CamerasControl CAMERAS_CONTROL = new CamerasControl();
+
     private static final FilteredCombo TIMELINES_COMBO = new FilteredCombo("Timelines", "Select a timeline...");
     private static final FilteredCombo ENTITY_TYPE_COMBO = new FilteredCombo("Display Entity", "Select a display entity...");
 
@@ -67,22 +70,23 @@ public class SceneWindow {
 
     public static void draw() {
         if (ImGui.begin("Scene")) {
-            if (DirectorState.CURRENT_MOVIE == null) {
+            if (DirectorState.currentMovie == null) {
                 ImGui.text("Please load a movie to edit a scene");
                 ImGui.end();
                 return;
             }
 
-            if (DirectorState.CURRENT_SCENE == null) {
+            if (DirectorState.currentScene == null) {
                 ImGui.text("Please select a scene");
                 ImGui.end();
                 return;
             }
 
-            ImGui.text("Current scene: %s".formatted(DirectorState.CURRENT_SCENE.name));
+            ImGui.text("Current scene: %s".formatted(DirectorState.currentScene.name));
 
             drawDummiesControl();
             drawTimelinesControl();
+            CAMERAS_CONTROL.draw();
             drawDummyEditWindow();
             handleEntitySelection();
         }
@@ -104,7 +108,7 @@ public class SceneWindow {
             ImGui.openPopup(CREATE_DUMMY_POPUP_NAME);
 
         if (ImGui.treeNode("All Dummies")) {
-            for (DummyData dummy : DirectorState.CURRENT_SCENE.dummies.values()) {
+            for (DummyData dummy : DirectorState.currentScene.dummies.values()) {
                 if (ImGui.selectable(dummy.name))
                     openDummyEditWindow(dummy);
             }
@@ -168,7 +172,7 @@ public class SceneWindow {
     private static void drawTimelinesControl() {
         ImGui.separatorText("Timelines");
 
-        List<TimelineData> timelines = DirectorState.CURRENT_SCENE.timelines;
+        List<TimelineData> timelines = DirectorState.currentScene.timelines;
 
         if (ImGui.button("New timeline..."))
             CREATE_TIMELINE_POPUP.open();
@@ -216,7 +220,7 @@ public class SceneWindow {
             DELETE_TIMELINE_MODAL.draw(deleteTimelineTitle, confirm -> {
                 if (confirm) {
                     DirectorState.deleteTimeline(currentSelectedTimelineIdx);
-                    DirectorState.CURRENT_TIMELINE = null;
+                    DirectorState.currentTimeline = null;
                     TimelineWindow.reset();
 
                     TIMELINES_COMBO.setSelectedItemIdx(-1);
@@ -394,7 +398,7 @@ public class SceneWindow {
         Minecraft mc = Minecraft.getInstance();
         AABB bb = entity.getBoundingBox();
 
-        ImVec2 size = ImGui.getIO().getDisplaySize(); // use the same size ImGui is rendering to
+        ImVec2 size = ImGui.getIO().getDisplaySize();
         float displayW = size.x, displayH = size.y;
 
         float[][] screen = new float[8][2];

@@ -2,16 +2,16 @@ package teddy.director.client.screen;
 
 import com.mojang.blaze3d.platform.Window;
 import imgui.ImGui;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
-import teddy.director.Director;
+import teddy.director.client.DirectorClient;
+import teddy.director.client.DirectorState;
 import teddy.director.client.screen.window.MovieWindow;
-import teddy.director.client.screen.window.SceneWindow;
+import teddy.director.client.screen.window.scene.SceneWindow;
 import teddy.director.client.screen.window.TimelineWindow;
 
 public class DirectorScreen extends Screen {
@@ -32,6 +32,11 @@ public class DirectorScreen extends Screen {
     @Override
     public void onClose() {
         active = false;
+        DirectorState.renderCamera.active = false;
+        DirectorState.freezeCulling = false;
+
+        // Reload all chunks
+        minecraft.levelExtractor.allChanged();
 
         super.onClose();
     }
