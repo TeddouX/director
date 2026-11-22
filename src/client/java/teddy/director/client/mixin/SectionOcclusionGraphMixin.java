@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import teddy.director.client.DirectorState;
 
 @Mixin(SectionOcclusionGraph.class)
-public class SectionOcclusionGraphMixin {
+public abstract class SectionOcclusionGraphMixin {
     @Inject(method = "update", at = @At("HEAD"), cancellable = true)
     private void director$skipUpdate(CallbackInfo ci) {
         if (DirectorState.freezeCulling) ci.cancel();

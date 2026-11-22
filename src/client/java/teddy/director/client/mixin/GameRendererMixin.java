@@ -6,13 +6,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.TextureFilteringMethod;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.GlobalSettingsUniform;
-import net.minecraft.client.renderer.Lightmap;
-import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.WindowRenderState;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,33 +42,42 @@ public abstract class GameRendererMixin {
     @Shadow public abstract void extract(DeltaTracker deltaTracker, boolean advanceGameTime);
     @Shadow public abstract void update(DeltaTracker deltaTracker);
     @Shadow public abstract void resize(int width, int height);
+    @Shadow public abstract RenderTarget mainRenderTarget();
 
-
-    @Shadow
-    public abstract RenderTarget mainRenderTarget();
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void director$render(final DeltaTracker deltaTracker, final boolean advanceGameTime, CallbackInfo ci) {
         if (!DirectorScreen.active)
             return;
 
+        DirectorState.freezeCulling = true;
+
         RenderCamera renderCam = DirectorState.renderCamera;
         if (renderCam != null && renderCam.active) {
             renderCam.updateMcCam(minecraft);
 
             director$shouldOverrideRenderTarget = true;
-            DirectorState.freezeCulling = true;
+            DirectorState.renderingUsingRenderCam = true;
+
+            minecraft.levelRenderer.skyRenderer.renderTarget = DirectorState.renderCamera.getRenderTarget();
 
             try {
                 director$renderLevelShort(deltaTracker);
             } finally {
                 director$shouldOverrideRenderTarget = false;
-                DirectorState.freezeCulling = true;
+                DirectorState.renderingUsingRenderCam = false;
+
+                renderCam.fixRenderTargetAlpha();
             }
+
+            minecraft.levelRenderer.skyRenderer.renderTarget = mainRenderTarget();
         }
 
         Freecam.update(minecraft);
+
         director$renderLevelShort(deltaTracker);
+
+        DirectorState.freezeCulling = false;
 
         long deltaMs = Math.round(deltaTracker.getRealtimeDeltaTicks() * 50f);
         ScenePlaybackController.frame(deltaMs);

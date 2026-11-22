@@ -15,6 +15,7 @@ import teddy.director.client.utils.Named;
 import java.util.*;
 
 public class DirectorState {
+    public static boolean renderingUsingRenderCam = false;
     public static boolean freezeCulling = false;
 
     public static MovieData currentMovie = null;

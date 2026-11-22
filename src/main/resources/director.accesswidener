@@ -1,4 +1,10 @@
 accessWidener v2 official
 
 accessible method net/minecraft/client/model/geom/ModelPart addAllChildren (Ljava/util/function/BiConsumer;)V
+
 accessible field net/minecraft/client/model/geom/ModelPart children Ljava/util/Map;
+
+accessible field net/minecraft/client/renderer/LevelRenderer skyRenderer Lnet/minecraft/client/renderer/SkyRenderer;
+
+accessible field net/minecraft/client/renderer/SkyRenderer renderTarget Lcom/mojang/blaze3d/pipeline/RenderTarget;
+mutable field net/minecraft/client/renderer/SkyRenderer renderTarget Lcom/mojang/blaze3d/pipeline/RenderTarget;
