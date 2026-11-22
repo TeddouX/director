@@ -2,14 +2,11 @@ package teddy.director.client.screen.window.scene;
 
 import foundry.imgui.api.ImGuiMC;
 import foundry.imgui.api.ImGuiTextureProvider;
-import imgui.ImDrawList;
 import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.flag.ImGuiStyleVar;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
-import org.lwjgl.opengl.GL11;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.rendering.RenderCamera;
 import teddy.director.client.utils.ConfirmModal;
@@ -23,6 +20,10 @@ public class CamerasControl {
     private final ImBoolean camPreviewWinOpen = new ImBoolean(false);
 
     public CamerasControl() {}
+
+    public void reset() {
+        camPreviewWinOpen.set(false);
+    }
 
     public void draw() {
         ImGui.separatorText("Camera");

@@ -1,35 +1,22 @@
 package teddy.director.client.screen.window.scene;
 
-import imgui.ImColor;
 import imgui.ImDrawList;
 import imgui.ImGui;
 import imgui.ImVec2;
-import imgui.flag.ImGuiCond;
 import imgui.flag.ImGuiMouseButton;
-import imgui.flag.ImGuiWindowFlags;
-import imgui.type.ImBoolean;
-import imgui.type.ImString;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
-import teddy.director.client.data.TimelineData;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.screen.Freecam;
-import teddy.director.client.screen.window.TimelineWindow;
-import teddy.director.client.utils.ConfirmModal;
-import teddy.director.client.utils.FilteredCombo;
-import teddy.director.client.utils.NameInputModal;
+import teddy.director.client.screen.window.timeline.TimelineWindow;
+import teddy.director.client.utils.ImGuiColors;
 
-import java.util.List;
 import java.util.Optional;
 
 public class SceneWindow {
@@ -39,34 +26,14 @@ public class SceneWindow {
             {0,4},{1,5},{2,6},{3,7}    // verticals
     };
 
-    private static final int ERROR_TEXT_COLOR = ImColor.rgba(245, 13, 13, 255);
-    private static final int BB_SELECTED = ImColor.rgba(0, 106, 255, 255);
-    private static final int BB_HOVERED = ImColor.rgba(88, 157, 252, 255);
-
-    private static final NameInputModal CREATE_TIMELINE_POPUP = new NameInputModal("Create Timeline");
-    private static final NameInputModal RENAME_TIMELINE_MODAL = new NameInputModal("Rename Timeline");
-    private static final ConfirmModal DELETE_TIMELINE_MODAL = new ConfirmModal("Delete Timeline");
-
     private static final CamerasControl CAMERAS_CONTROL = new CamerasControl();
+    private static final DummyEditWindow DUMMY_EDIT_WINDOW = new DummyEditWindow();
+    private static final CreateDummyPopup CREATE_DUMMY_POPUP = new CreateDummyPopup("Create Dummy");
+    private static final TimelinesControl TIMELINES_CONTROL = new TimelinesControl();
 
-    private static final FilteredCombo TIMELINES_COMBO = new FilteredCombo("Timelines", "Select a timeline...");
-    private static final FilteredCombo ENTITY_TYPE_COMBO = new FilteredCombo("Display Entity", "Select a display entity...");
+    private static final double DUMMY_SELECT_REACH = 75;
 
-    private static final String CREATE_DUMMY_POPUP_NAME = "Create Dummy";
-    private static final ImString dummyNameImString = new ImString();
-    private static boolean hasEmptyTrackNameError = false;
-    private static boolean hasNotSelectedEntityType = false;
-    private static EntityType<?> selectedEntityType = null;
-
-    private static int currentSelectedTimelineIdx = -1;
-    private static boolean openTimelineRenameModal = false;
-    private static boolean openTimelineDeleteModal = false;
-
-    private static final ImBoolean dummyEditWindowOpen = new ImBoolean(false);
-    private static boolean dummyEditWindowWasOpened = false;
     private static DummyData selectedDummy = null;
-    private static final ImString dummyRenameImString = new ImString();
-    private static boolean hasEmptyRenameDummyStrErr = false;
 
     public static void draw() {
         if (ImGui.begin("Scene")) {
@@ -84,10 +51,12 @@ public class SceneWindow {
 
             ImGui.text("Current scene: %s".formatted(DirectorState.currentScene.name));
 
+            TIMELINES_CONTROL.draw();
             drawDummiesControl();
-            drawTimelinesControl();
             CAMERAS_CONTROL.draw();
-            drawDummyEditWindow();
+            DUMMY_EDIT_WINDOW.draw();
+            CREATE_DUMMY_POPUP.draw();
+
             handleEntitySelection();
         }
 
@@ -95,8 +64,10 @@ public class SceneWindow {
     }
 
     public static void reset() {
-        TIMELINES_COMBO.reset();
-        currentSelectedTimelineIdx = -1;
+        CAMERAS_CONTROL.reset();
+        CREATE_DUMMY_POPUP.reset();
+        DUMMY_EDIT_WINDOW.close();
+        TIMELINES_CONTROL.reset();
 
         TimelineWindow.reset();
     }
@@ -105,249 +76,38 @@ public class SceneWindow {
         ImGui.separatorText("Dummies");
 
         if (ImGui.button("Create dummy..."))
-            ImGui.openPopup(CREATE_DUMMY_POPUP_NAME);
+            CREATE_DUMMY_POPUP.open();
 
         if (ImGui.treeNode("All Dummies")) {
             for (DummyData dummy : DirectorState.currentScene.dummies.values()) {
-                if (ImGui.selectable(dummy.name))
-                    openDummyEditWindow(dummy);
+                if (ImGui.selectable(dummy.name)) {
+                    DUMMY_EDIT_WINDOW.open(dummy);
+                    selectedDummy = dummy;
+                }
             }
 
             ImGui.treePop();
         }
-
-        drawCreateDummyPopup();
-    }
-
-    private static void drawCreateDummyPopup() {
-        ImVec2 center = ImGui.getMainViewport().getCenter();
-        ImGui.setNextWindowPos(center, ImGuiCond.Appearing, new ImVec2(0.5f, 0.5f));
-
-        if (ImGui.beginPopupModal(CREATE_DUMMY_POPUP_NAME, null, ImGuiWindowFlags.AlwaysAutoResize)) {
-            if (ImGui.isWindowAppearing())
-                ImGui.setKeyboardFocusHere();
-            ImGui.inputText("Name", dummyNameImString);
-
-            if (hasEmptyTrackNameError)
-                ImGui.textColored(ERROR_TEXT_COLOR, "Please input a track name");
-
-            int selectedEntityId = drawEntityTypeCombo();
-            if (selectedEntityId >= 0)
-                selectedEntityType = BuiltInRegistries.ENTITY_TYPE.byId(selectedEntityId);
-
-            ImGui.separator();
-
-            if (ImGui.button("Create")) {
-                hasEmptyTrackNameError = dummyNameImString.isEmpty();
-                hasNotSelectedEntityType = selectedEntityType == null;
-
-                if (!hasEmptyTrackNameError && !hasNotSelectedEntityType) {
-                    DirectorState.createAndSummonDummy(dummyNameImString.get(), selectedEntityType);
-
-                    resetCreateDummyPopupData();
-                    ImGui.closeCurrentPopup();
-                }
-            }
-
-            ImGui.sameLine();
-
-            if (ImGui.button("Cancel")) {
-                resetCreateDummyPopupData();
-                ImGui.closeCurrentPopup();
-            }
-
-            ImGui.endPopup();
-        }
-    }
-
-    private static void resetCreateDummyPopupData() {
-        hasEmptyTrackNameError = false;
-        hasNotSelectedEntityType = false;
-        ENTITY_TYPE_COMBO.reset();
-
-        selectedEntityType = null;
-        dummyNameImString.clear();
-    }
-
-    private static void drawTimelinesControl() {
-        ImGui.separatorText("Timelines");
-
-        List<TimelineData> timelines = DirectorState.currentScene.timelines;
-
-        if (ImGui.button("New timeline..."))
-            CREATE_TIMELINE_POPUP.open();
-
-        int selected = TIMELINES_COMBO.draw(
-                timelines.size(),
-                i -> timelines.get(i).name,
-                i -> {
-                    if (ImGui.beginPopupContextItem()) {
-                        TIMELINES_COMBO.setSelectedItemIdx(i);
-                        currentSelectedTimelineIdx = i;
-
-                        DirectorState.setCurrentTimeline(i);
-
-                        if (ImGui.menuItem("Rename"))
-                            openTimelineRenameModal = true;
-
-                        if (ImGui.menuItem("Delete"))
-                            openTimelineDeleteModal = true;
-
-                        ImGui.endPopup();
-                    }
-                }
-        );
-
-        if (selected >= 0)
-            DirectorState.setCurrentTimeline(selected);
-
-        if (openTimelineDeleteModal) {
-            DELETE_TIMELINE_MODAL.open();
-            openTimelineDeleteModal = false;
-        }
-
-        if (openTimelineRenameModal) {
-            RENAME_TIMELINE_MODAL.open();
-            openTimelineRenameModal = false;
-        }
-
-        RENAME_TIMELINE_MODAL.draw(name -> DirectorState.renameTimeline(currentSelectedTimelineIdx, name));
-
-        if (currentSelectedTimelineIdx >= 0) {
-            String deleteTimelineTitle = "Are you sure you want to delete timeline \"%s\" ?"
-                    .formatted(DirectorState.getTimelineName(currentSelectedTimelineIdx));
-
-            DELETE_TIMELINE_MODAL.draw(deleteTimelineTitle, confirm -> {
-                if (confirm) {
-                    DirectorState.deleteTimeline(currentSelectedTimelineIdx);
-                    DirectorState.currentTimeline = null;
-                    TimelineWindow.reset();
-
-                    TIMELINES_COMBO.setSelectedItemIdx(-1);
-                    currentSelectedTimelineIdx = -1;
-                }
-            });
-        }
-
-        CREATE_TIMELINE_POPUP.draw(name -> {
-            currentSelectedTimelineIdx = DirectorState.createAndAddTimeline(name);
-            TIMELINES_COMBO.setSelectedItemIdx(currentSelectedTimelineIdx);
-            DirectorState.setCurrentTimeline(currentSelectedTimelineIdx);
-        });
-    }
-
-    private static void drawDummyEditWindow() {
-        if (!dummyEditWindowOpen.get() || selectedDummy == null)
-            return;
-
-        // TODO : special case for a player to set the skin etc
-
-        ImGui.begin("Edit Dummy", dummyEditWindowOpen);
-
-        ImGui.separatorText("Info");
-
-        ImGui.inputText("Name", dummyRenameImString);
-        if (hasEmptyRenameDummyStrErr)
-            ImGui.textColored(ERROR_TEXT_COLOR, "Please enter a name");
-
-        ImGui.text("UUID: %s".formatted(selectedDummy.uuid.toString()));
-
-        int selectedEntityId = drawEntityTypeCombo();
-        if (selectedEntityId >= 0)
-            selectedEntityType = BuiltInRegistries.ENTITY_TYPE.byId(selectedEntityId);
-
-        Vec3 pos = selectedDummy.pos;
-        ImGui.text("Original position: (%.2f, %.2f, %.2f)".formatted(pos.x, pos.y, pos.z));
-
-        ImGui.separator();
-
-        if (ImGui.button("Done")) {
-            hasEmptyRenameDummyStrErr = dummyRenameImString.isEmpty();
-
-            if (!hasEmptyRenameDummyStrErr) {
-                selectedDummy.name = dummyRenameImString.get();
-
-                String newEntityId = BuiltInRegistries.ENTITY_TYPE.getKey(selectedEntityType).toString();
-
-                if (!newEntityId.equals(selectedDummy.displayEntityID)) {
-                    ScenePlaybackController.removeDummyEntity(selectedDummy.uuid);
-
-                    selectedDummy.displayEntityID = newEntityId;
-
-                    ScenePlaybackController.summonDummy(selectedDummy);
-                }
-
-                closeDummyEditWindow();
-
-            }
-        }
-
-        ImGui.sameLine();
-
-        if (ImGui.button("Cancel"))
-            closeDummyEditWindow();
-
-        ImGui.end();
-
-        if (dummyEditWindowWasOpened && !dummyEditWindowOpen.get())
-            closeDummyEditWindow();
-
-        dummyEditWindowWasOpened = dummyEditWindowOpen.get();
-    }
-
-    private static void closeDummyEditWindow() {
-        dummyRenameImString.clear();
-
-        selectedDummy = null;
-        selectedEntityType = null;
-
-        ENTITY_TYPE_COMBO.setSelectedItemIdx(-1);
-
-        dummyEditWindowOpen.set(false);
-    }
-
-    private static void openDummyEditWindow(DummyData dummyData) {
-        dummyEditWindowOpen.set(true);
-        selectedDummy = dummyData;
-        dummyRenameImString.set(dummyData.name);
-
-        Identifier id = Identifier.parse(dummyData.displayEntityID);
-        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getValue(id);
-        int idx = BuiltInRegistries.ENTITY_TYPE.getId(entityType);
-
-        ENTITY_TYPE_COMBO.setSelectedItemIdx(idx);
-    }
-
-    private static int drawEntityTypeCombo() {
-        return ENTITY_TYPE_COMBO.draw(BuiltInRegistries.ENTITY_TYPE.size(), i -> {
-            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.byId(i);
-            if (!DefaultAttributes.hasSupplier(entityType))
-                return "";
-
-            Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
-
-            return id.toString();
-        });
     }
 
     private static void handleEntitySelection() {
         if (selectedDummy != null) {
             DummyEntity dummyEntity = ScenePlaybackController.getDummyEntity(selectedDummy.uuid);
-            drawEntityBoundingBox(dummyEntity, BB_SELECTED);
+            drawEntityBoundingBox(dummyEntity, ImGuiColors.BB_SELECTED);
         }
 
-        Entity hoveredEntity = getHoveredDummyEntity(100);
+        Entity hoveredEntity = getHoveredDummyEntity();
         if (!(hoveredEntity instanceof DummyEntity dummyEntity))
             return;
 
         if (!Freecam.active)
-            drawEntityBoundingBox(hoveredEntity, BB_HOVERED);
+            drawEntityBoundingBox(hoveredEntity, ImGuiColors.BB_HOVERED);
 
         if (ImGui.isMouseDown(ImGuiMouseButton.Left))
-            openDummyEditWindow(dummyEntity.data);
+            DUMMY_EDIT_WINDOW.open(dummyEntity.data);
     }
 
-    private static Entity getHoveredDummyEntity(double reach) {
+    private static Entity getHoveredDummyEntity() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return null;
 
@@ -372,12 +132,12 @@ public class SceneWindow {
                 .normalize();
 
         Vec3 start = camera.position();
-        Vec3 end = start.add(dir.scale(reach));
+        Vec3 end = start.add(dir.scale(DUMMY_SELECT_REACH));
 
         AABB searchBox = new AABB(start, end).inflate(1.0);
 
         Entity closest = null;
-        double closestDist2 = reach * reach;
+        double closestDist2 = DUMMY_SELECT_REACH * DUMMY_SELECT_REACH;
 
         for (Entity e : mc.level.getEntities(mc.player, searchBox, e -> e instanceof DummyEntity)) {
             AABB box = e.getBoundingBox();
