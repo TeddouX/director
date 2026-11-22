@@ -6,7 +6,7 @@ import imgui.ImVec2;
 import imgui.flag.ImGuiMouseButton;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
-import teddy.director.client.data.track.keyframe.AbstractKeyframe;
+import teddy.director.client.data.track.AbstractKeyframe;
 import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.ImGuiColors;
 import teddy.director.client.utils.NameInputModal;
@@ -19,7 +19,6 @@ public class TimelineTracks {
     private static final float KEYFRAME_HALF_WIDTH = 6;
     private static final float KEYFRAME_HALF_HEIGHT = 6;
 
-    private static final float MS_BASE_PIXEL_SEPARATION_SIZE = 4;
     private static final float MS_LINE_HEIGHT = 6;
     private static final float SECOND_LINE_HEIGHT = 10;
 
@@ -63,7 +62,7 @@ public class TimelineTracks {
         boolean openRenameTrackModal = false;
         if (ImGui.beginPopup("track_name_right_click_menu")) {
             if (ImGui.selectable("Edit")) {
-                AbstractTrack track = DirectorState.currentTimeline.tracks.get(rightClickMenuTrackIdx);
+                AbstractTrack<?> track = DirectorState.currentTimeline.tracks.get(rightClickMenuTrackIdx);
                 track.showEditWindow();
             }
 
@@ -104,15 +103,15 @@ public class TimelineTracks {
                 ImGuiColors.TRACKS_GRAY
         );
 
-        List<AbstractTrack> timelineTracks = DirectorState.currentTimeline.tracks;
-        for (AbstractTrack track : timelineTracks) {
+        List<AbstractTrack<?>> timelineTracks = DirectorState.currentTimeline.tracks;
+        for (AbstractTrack<?> track : timelineTracks) {
             ImVec2 nameSize = ImGui.calcTextSize(track.name);
             startPosX = Math.max(windowOrigin.x + nameSize.x, startPosX);
         }
         startPosX += TRACK_NAME_PADDING * 2;
 
         for (int i = 0; i < timelineTracks.size(); i++) {
-            AbstractTrack track = timelineTracks.get(i);
+            AbstractTrack<?> track = timelineTracks.get(i);
             drawTrack(track, trackY, dl, windowOrigin, windowSize);
             trackY += TRACK_HEIGHT;
             handleTrackRightClickMenu(i, trackY, windowOrigin, windowSize);
@@ -122,7 +121,7 @@ public class TimelineTracks {
         endPosY = trackY;
 
         trackY = windowOrigin.y + TimelinePlayhead.DRAGGABLE_AREA_HEIGHT;
-        for (AbstractTrack track : DirectorState.currentTimeline.tracks) {
+        for (AbstractTrack<?> track : DirectorState.currentTimeline.tracks) {
             for (AbstractKeyframe kf : track.getKeyframes().values()) {
                 drawKeyframe(kf, trackY, dl, windowOrigin, windowSize);
                 handleKeyframeSelectAndDrag();
@@ -139,7 +138,7 @@ public class TimelineTracks {
         );
     }
 
-    private void drawTrack(AbstractTrack track, float trackY, ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
+    private void drawTrack(AbstractTrack<?> track, float trackY, ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
         ImVec2 nameSize = ImGui.calcTextSize(track.name);
 
         // Place the text in the middle
@@ -246,7 +245,7 @@ public class TimelineTracks {
     }
 
     private void createKeyframe(long ms) {
-        AbstractTrack track = DirectorState.getTrack(rightClickMenuTrackIdx);
+        AbstractTrack<?> track = DirectorState.getTrack(rightClickMenuTrackIdx);
         AbstractKeyframe kf = track.createKeyframe(ms);
         openKeyframeWindow(kf);
     }

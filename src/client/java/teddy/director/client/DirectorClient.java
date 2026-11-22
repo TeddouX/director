@@ -87,9 +87,7 @@ public class DirectorClient implements ClientModInitializer {
 	}
 
 	private void registerImGuiEvents() {
-		ImGuiLoadEventsFabric.POST.register(() -> {
-			ImGui.getIO().addConfigFlags(ImGuiConfigFlags.DockingEnable);
-		});
+		ImGuiLoadEventsFabric.POST.register(() -> ImGui.getIO().addConfigFlags(ImGuiConfigFlags.DockingEnable));
 
 		RenderImGuiEventsFabric.POST.register(() -> {
 			ImGui.dockSpaceOverViewport(0, ImGui.getMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);

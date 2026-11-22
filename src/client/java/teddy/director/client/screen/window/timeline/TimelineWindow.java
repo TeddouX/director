@@ -4,13 +4,9 @@ import imgui.*;
 import imgui.flag.*;
 import imgui.type.ImString;
 import teddy.director.client.DirectorState;
-import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.TrackRegistry;
-import teddy.director.client.data.track.keyframe.AbstractKeyframe;
 import teddy.director.client.playback.ScenePlaybackController;
-import teddy.director.client.utils.ConfirmModal;
 import teddy.director.client.utils.ImGuiColors;
-import teddy.director.client.utils.NameInputModal;
 
 import java.util.List;
 

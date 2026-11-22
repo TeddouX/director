@@ -15,6 +15,12 @@ public class Vec3Input {
         this.speed = speed;
     }
 
+    public void setValue(Vec3 val) {
+        value[0] = (float)val.x;
+        value[1] = (float)val.y;
+        value[2] = (float)val.z;
+    }
+
     public void draw(Consumer<Vec3> onChange) {
         if (ImGui.dragFloat3(label, value, speed))
             onChange.accept(getValue());

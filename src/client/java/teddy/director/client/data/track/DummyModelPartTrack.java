@@ -5,27 +5,22 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.DummyData;
-import teddy.director.client.data.track.keyframe.AbstractKeyframe;
-import teddy.director.client.data.track.keyframe.DummyModelPartKeyframe;
-import teddy.director.client.data.track.keyframe.KeyframePair;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.ModelPartLookup;
 import teddy.director.client.playback.ScenePlaybackController;
+import teddy.director.client.utils.Vec3Input;
 
 import java.lang.reflect.Type;
 import java.util.*;
 
-public class DummyModelPartTrack extends AbstractTrack {
+public class DummyModelPartTrack extends AbstractTrack<DummyModelPartTrack.Keyframe> {
     public static final String TYPE_ID = "dummy_model_part";
 
-    private TreeMap<Long, DummyModelPartKeyframe> keyframes = new TreeMap<>();
     private List<UUID> controlledDummies = new ArrayList<>();
     private String dummyEntityTypeId = "";
     private EntityType<?> dummyEntityType = null;
@@ -40,7 +35,6 @@ public class DummyModelPartTrack extends AbstractTrack {
     public void save(JsonObject obj, Gson gson) {
         super.save(obj, gson);
 
-        obj.add("keyframes", gson.toJsonTree(keyframes));
         obj.add("controlled_dummies", gson.toJsonTree(controlledDummies));
         obj.addProperty("controlled_entity_type", dummyEntityTypeId);
         obj.addProperty("controlled_model_part", dummyModelPart);
@@ -50,29 +44,24 @@ public class DummyModelPartTrack extends AbstractTrack {
     public void load(JsonObject obj, Gson gson) {
         super.load(obj, gson);
 
-        Type keyframesTy = new TypeToken<TreeMap<Long, DummyModelPartKeyframe>>(){}.getType();
         Type dummyUUIDsTy = new TypeToken<List<UUID>>(){}.getType();
 
-        this.keyframes = gson.fromJson(obj.get("keyframes"), keyframesTy);
         this.controlledDummies = gson.fromJson(obj.get("controlled_dummies"), dummyUUIDsTy);
         this.dummyEntityTypeId = obj.get("controlled_entity_type").getAsString();
         this.dummyModelPart = obj.get("controlled_model_part").getAsString();
-
-        for (DummyModelPartKeyframe kf : this.keyframes.values())
-            kf.setParentTrack(this);
     }
 
     @Override
     public void update(long ms) {
-        if (keyframes.isEmpty())
+        if (getKeyframes().isEmpty())
             return;
 
         KeyframePair keyframes = getKeyframesAround(ms);
         Vec3 lerpedPos;
         Vec3 lerpedRot;
 
-        DummyModelPartKeyframe before = (DummyModelPartKeyframe) keyframes.before();
-        DummyModelPartKeyframe after = (DummyModelPartKeyframe) keyframes.after();
+        Keyframe before = (Keyframe) keyframes.before();
+        Keyframe after = (Keyframe) keyframes.after();
         if (before == null && after == null) {
             return;
         }
@@ -102,28 +91,10 @@ public class DummyModelPartTrack extends AbstractTrack {
     }
 
     @Override
-    public AbstractKeyframe createKeyframe(long ms) {
-        DummyModelPartKeyframe kf = new DummyModelPartKeyframe(ms);
-        keyframes.put(ms, kf);
-        kf.setParentTrack(this);
-
+    public Keyframe createKeyframe(long ms) {
+        Keyframe kf = new Keyframe(ms);
+        addKeyframe(ms, kf);
         return kf;
-    }
-
-    @Override
-    public TreeMap<Long, ? extends AbstractKeyframe> getKeyframes() {
-        return keyframes;
-    }
-
-    @Override
-    public void moveKeyframe(long fromMs, long toMs) {
-        if (fromMs == toMs) return;
-
-        DummyModelPartKeyframe kf = keyframes.remove(fromMs);
-        if (kf == null) return;
-
-        kf.ms = toMs;
-        keyframes.put(toMs, kf);
     }
 
     @Override
@@ -172,8 +143,8 @@ public class DummyModelPartTrack extends AbstractTrack {
 
                 ImGui.sameLine(ImGui.getWindowWidth() - btnSize - padding);
                 if (ImGui.button("+###%s".formatted(dummy.uuid), btnSize, btnSize)) {
-                    if (showWarnOnAdd)
-                        Director.LOGGER.info("bla");
+                    if (showWarnOnAdd);
+                        // TODO : Warn user and delete keyframes
                     else
                         controlledDummies.add(dummy.uuid);
                 }
@@ -241,5 +212,29 @@ public class DummyModelPartTrack extends AbstractTrack {
         if (dummyEntityType == null && !dummyEntityTypeId.isEmpty())
             dummyEntityType = Director.entityTypeFromStringId(dummyEntityTypeId);
         return dummyEntityType;
+    }
+
+    public static class Keyframe extends AbstractKeyframe {
+        public Vec3 position = new Vec3(0, 0, 0);
+        public Vec3 rotation = new Vec3(0, 0, 0);
+
+        private final transient Vec3Input posInput = new Vec3Input("Position", 0.01f);
+        private final transient Vec3Input rotInput = new Vec3Input("Rotation", 0.01f);
+
+        public Keyframe() {
+            super(0);
+        }
+
+        public Keyframe(long ms) {
+            super(ms);
+        }
+
+        @Override
+        protected void drawImGuiWindowContents() {
+            ImGui.separatorText("Edit model part");
+
+            posInput.draw(pos -> position = pos);
+            rotInput.draw(rot -> rotation = rot);
+        }
     }
 }

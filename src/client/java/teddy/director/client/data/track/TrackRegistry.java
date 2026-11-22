@@ -8,14 +8,14 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class TrackRegistry {
-    private static final Map<String, Supplier<? extends AbstractTrack>> TYPES = new HashMap<>();
+    private static final Map<String, Supplier<? extends AbstractTrack<?>>> TYPES = new HashMap<>();
     private static List<String> ALL_IDS = new ArrayList<>();
 
-    public static void register(String id, Supplier<? extends AbstractTrack> factory) {
+    public static void register(String id, Supplier<? extends AbstractTrack<?>> factory) {
         TYPES.put(id, factory);
     }
 
-    public static JsonObject write(AbstractTrack track, Gson gson) {
+    public static JsonObject write(AbstractTrack<?> track, Gson gson) {
         JsonObject obj = new JsonObject();
         obj.addProperty("type", track.getTypeID());
         track.save(obj, gson);
@@ -23,18 +23,18 @@ public class TrackRegistry {
         return obj;
     }
 
-    public static AbstractTrack read(JsonObject obj, Gson gson) {
+    public static AbstractTrack<?> read(JsonObject obj, Gson gson) {
         String id = obj.get("type").getAsString();
-        Supplier<? extends AbstractTrack> factory = getTrackFactory(id);
-        AbstractTrack track = factory.get();
+        Supplier<? extends AbstractTrack<?>> factory = getTrackFactory(id);
+        AbstractTrack<?> track = factory.get();
 
         track.load(obj, gson);
 
         return track;
     }
 
-    public static Supplier<? extends AbstractTrack> getTrackFactory(String name) {
-        Supplier<? extends AbstractTrack> factory = TYPES.get(name);
+    public static Supplier<? extends AbstractTrack<?>> getTrackFactory(String name) {
+        Supplier<? extends AbstractTrack<?>> factory = TYPES.get(name);
         if (factory == null)
             throw new JsonParseException("Unknown track type: " + name);
 
@@ -51,7 +51,7 @@ public class TrackRegistry {
 
     static {
         register(DummyModelPartTrack.TYPE_ID, DummyModelPartTrack::new);
-        // register(DummyPositionTrack.TYPE_ID, DummyPositionTrack::new);
+        register(CameraPosTrack.TYPE_ID, CameraPosTrack::new);
 
         registrationFinished();
     }

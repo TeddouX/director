@@ -18,7 +18,7 @@ public class TimelineData extends Named {
     private static final String SAVE_FILE_NAME = "timeline_data.json";
 
     public UUID uuid;
-    public List<AbstractTrack> tracks = new ArrayList<>();
+    public List<AbstractTrack<?>> tracks = new ArrayList<>();
 
     public TimelineData() {
         super("");
@@ -40,7 +40,7 @@ public class TimelineData extends Named {
         saveData.name = name;
         saveData.uuid = uuid;
 
-        for (AbstractTrack track : tracks) {
+        for (AbstractTrack<?> track : tracks) {
             saveData.trackUUIDs.add(track.uuid);
 
             Path trackFile = timelineFolderPath.resolve(track.uuid.toString() + ".json");
@@ -65,7 +65,7 @@ public class TimelineData extends Named {
             for (UUID trackUUID : saveData.trackUUIDs) {
                 Path trackFile = timelineFolderPath.resolve(trackUUID.toString() + ".json");
                 JsonObject obj = JsonParser.parseReader(Files.newBufferedReader(trackFile)).getAsJsonObject();
-                AbstractTrack track = TrackRegistry.read(obj, gson);
+                AbstractTrack<?> track = TrackRegistry.read(obj, gson);
 
                 timelineData.tracks.add(track);
             }

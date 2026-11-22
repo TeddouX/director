@@ -158,7 +158,7 @@ public class DirectorState {
 
     // --- TRACKS ---
 
-    public static AbstractTrack getTrack(int idx) {
+    public static AbstractTrack<?> getTrack(int idx) {
         return currentTimeline.tracks.get(idx);
     }
 
@@ -177,7 +177,7 @@ public class DirectorState {
     public static void createAndAddTrack(String name, String type) {
         if (currentTimeline == null) return;
 
-        AbstractTrack track = TrackRegistry.getTrackFactory(type).get();
+        AbstractTrack<?> track = TrackRegistry.getTrackFactory(type).get();
         track.name = name;
         track.uuid = UUID.randomUUID();
 
