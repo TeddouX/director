@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import teddy.director.Director;
 import teddy.director.client.access.CameraAccess;
 
@@ -17,6 +18,8 @@ public class Freecam {
     public static boolean active = false;
     public static Vec3 pos = Vec3.ZERO, prevPos = Vec3.ZERO;
     public static float yaw, pitch;
+    public static Matrix4f projMat;
+    
     private static long lastNanos;
 
     public static void copyPlayerCam() {

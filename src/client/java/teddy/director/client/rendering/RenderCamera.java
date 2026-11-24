@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import foundry.imgui.api.ImGuiMC;
 import foundry.imgui.api.ImGuiTextureProvider;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector4f;
 import teddy.director.client.access.CameraAccess;
@@ -16,6 +17,8 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 public class RenderCamera {
+    private static final double BB_HALF_SIZE = 2.0;
+
     private final RenderTarget renderTarget;
     public CameraData cameraData;
     public boolean active = false;
@@ -56,6 +59,17 @@ public class RenderCamera {
             pass.setPipeline(RenderPipelines.FORCE_ALPHA);
             pass.draw(3, 1, 0, 0);
         }
+    }
+
+    public AABB getBoundingBox() {
+        return new AABB(
+                this.pos.x - .5,
+                this.pos.y - .5,
+                this.pos.z - .5,
+                this.pos.x + .5,
+                this.pos.y + .5,
+                this.pos.z + .5
+        );
     }
 
     public ImGuiTextureProvider getColorTex() {

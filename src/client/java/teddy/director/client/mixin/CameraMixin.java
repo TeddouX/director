@@ -3,24 +3,17 @@ package teddy.director.client.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.jspecify.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import teddy.director.Director;
 import teddy.director.client.DirectorState;
 import teddy.director.client.access.CameraAccess;
-import teddy.director.client.screen.DirectorScreen;
+import teddy.director.client.screen.Freecam;
 
 @Mixin(Camera.class)
 public abstract class CameraMixin implements CameraAccess {
@@ -48,6 +41,12 @@ public abstract class CameraMixin implements CameraAccess {
         else {
             original.call(self, partialTicks);
         }
+    }
+
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    private void director$captureProjMat(CameraRenderState cameraState, float cameraEntityPartialTicks, CallbackInfo ci) {
+        if (!DirectorState.renderingUsingRenderCam)
+            Freecam.projMat = cameraState.projectionMatrix;
     }
 
     @Override

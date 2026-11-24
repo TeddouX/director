@@ -160,14 +160,15 @@ public class MovieWindow {
                     .formatted(DirectorState.getSceneName(currentSelectedSceneIdx));
 
             DELETE_SCENE_MODAL.draw(deleteSceneTitle, confirm -> {
-                if (confirm) {
-                    DirectorState.deleteScene(currentSelectedSceneIdx);
-                    DirectorState.currentScene = null;
+                if (!confirm) return;
 
-                    SceneWindow.reset();
-                    SCENES_COMBO.setSelectedItemIdx(-1);
-                    currentSelectedSceneIdx = -1;
-                }
+                DirectorState.deleteScene(currentSelectedSceneIdx);
+                DirectorState.currentScene = null;
+                DirectorState.currentTimeline = null;
+
+                SceneWindow.reset();
+                SCENES_COMBO.setSelectedItemIdx(-1);
+                currentSelectedSceneIdx = -1;
             });
         }
 

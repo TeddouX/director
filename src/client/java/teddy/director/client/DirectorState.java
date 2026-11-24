@@ -21,6 +21,7 @@ public class DirectorState {
     public static MovieData currentMovie = null;
     public static SceneData currentScene = null;
     public static TimelineData currentTimeline = null;
+    public static int currentTimelineIdx = -1;
 
     public static RenderCamera renderCamera = null;
 
@@ -81,6 +82,9 @@ public class DirectorState {
 
     public static int createAndAddScene(String name) {
         SceneData sceneData = new SceneData(name);
+        sceneData.camera.origPos = Freecam.pos;
+        sceneData.camera.origYaw = Freecam.yaw;
+        sceneData.camera.origPitch = Freecam.pitch;
 
         currentMovie.scenes.add(sceneData);
 
@@ -113,20 +117,6 @@ public class DirectorState {
         return currentScene.dummies.get(uuid);
     }
 
-    public static void createAndAddCamera(String name) {
-        if (currentScene == null) return;
-
-        CameraData camera = new CameraData(name);
-        camera.origPos = Freecam.pos;
-
-        renderCamera.yaw = Freecam.yaw;
-        renderCamera.pitch = Freecam.pitch;
-        renderCamera.pos = Freecam.pos;
-        renderCamera.cameraData = camera;
-
-        currentScene.camera = camera;
-    }
-
     // --- TIMELINES ---
 
     public static String getTimelineName(int idx) {
@@ -143,6 +133,7 @@ public class DirectorState {
 
     public static void setCurrentTimeline(int idx) {
         currentTimeline = currentScene.timelines.get(idx);
+        currentTimelineIdx = idx;
     }
 
     public static int createAndAddTimeline(String name) {

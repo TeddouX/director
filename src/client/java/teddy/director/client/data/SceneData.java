@@ -15,7 +15,7 @@ public class SceneData extends Named {
     public UUID uuid;
     public List<TimelineData> timelines = new ArrayList<>();
     public Map<UUID, DummyData> dummies = new HashMap<>();
-    public CameraData camera;
+    public CameraData camera = new CameraData();
 
     public SceneData() {
         super("");

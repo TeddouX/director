@@ -35,6 +35,11 @@ public class TimelinesControl {
         if (ImGui.button("New timeline..."))
             CREATE_TIMELINE_POPUP.open();
 
+        if (DirectorState.currentTimeline != null) {
+            currentSelectedTimelineIdx = DirectorState.currentTimelineIdx;
+            TIMELINES_COMBO.setSelectedItemIdx(currentSelectedTimelineIdx);
+        }
+
         int selected = TIMELINES_COMBO.draw(
                 timelines.size(),
                 i -> timelines.get(i).name,
@@ -81,7 +86,7 @@ public class TimelinesControl {
                     DirectorState.currentTimeline = null;
                     TimelineWindow.reset();
 
-                    TIMELINES_COMBO.setSelectedItemIdx(-1);
+                    TIMELINES_COMBO.reset();
                     currentSelectedTimelineIdx = -1;
                 }
             });
