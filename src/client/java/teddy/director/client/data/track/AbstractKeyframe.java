@@ -4,7 +4,7 @@ import imgui.ImGui;
 import imgui.type.ImBoolean;
 
 public abstract class AbstractKeyframe {
-    private transient AbstractTrack track;
+    protected transient AbstractTrack track;
     public transient ImBoolean windowOpen = new ImBoolean(true);
 
     public long ms;

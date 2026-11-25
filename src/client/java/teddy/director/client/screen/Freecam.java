@@ -6,9 +6,9 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import teddy.director.Director;
 import teddy.director.client.access.CameraAccess;
 
 public class Freecam {
@@ -21,6 +21,18 @@ public class Freecam {
     public static Matrix4f projMat;
     
     private static long lastNanos;
+
+    public static Vec3 forwards() {
+        float yawRads = (float) Math.toRadians(yaw);
+        float pitchRads = (float) Math.toRadians(pitch);
+        double cosPitch = Mth.cos(pitchRads);
+
+        return new Vec3(
+                -Mth.sin(yawRads) * cosPitch,
+                -Mth.sin(pitchRads),
+                Mth.cos(yawRads) * cosPitch
+        );
+    }
 
     public static void copyPlayerCam() {
         LocalPlayer player = Minecraft.getInstance().player;

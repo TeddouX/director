@@ -3,7 +3,6 @@ package teddy.director.client.utils;
 import imgui.ImGui;
 import imgui.ImGuiTextFilter;
 import org.jetbrains.annotations.Nullable;
-import teddy.director.Director;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -61,6 +60,14 @@ public class FilteredCombo {
 
     public int draw(int numItems, Function<Integer, String> getItemAt) {
         return draw(numItems, getItemAt, null);
+    }
+
+    public int draw(String[] items) {
+        return draw(items.length, i -> items[i]);
+    }
+
+    public int getSelectedItemIdx() {
+        return selectedItemIdx;
     }
 
     public void setSelectedItemIdx(int idx) {

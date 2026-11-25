@@ -77,6 +77,10 @@ public abstract class AbstractTrack<T extends AbstractKeyframe> extends Named {
         windowOpen.set(true);
     }
 
+    public boolean isEditWindowOpen() {
+        return windowOpen.get();
+    }
+
     public abstract void drawEditWindow();
 }
 

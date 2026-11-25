@@ -1,6 +1,5 @@
 package teddy.director.client.utils;
 
-import imgui.ImColor;
 import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.flag.ImGuiCond;
@@ -10,8 +9,6 @@ import imgui.type.ImString;
 import java.util.function.Consumer;
 
 public class NameInputModal {
-    private static final int ERROR_TEXT_COLOR = ImColor.rgba(245, 13, 13, 255);
-
     private final String name;
     private final ImString input = new ImString();
     private boolean hasEmptyNameError = false;
@@ -34,15 +31,14 @@ public class NameInputModal {
             ImGui.inputText("Name", input);
 
             if (hasEmptyNameError)
-                ImGui.textColored(ERROR_TEXT_COLOR, "Name is empty");
+                ImGui.textColored(ImGuiColors.ERROR_TEXT, "Name is empty");
 
             ImGui.separator();
 
             if (ImGui.button("Done")) {
                 if (!input.isEmpty()) {
                     onConfirm.accept(input.get());
-                    input.clear();
-
+                    resetData();
                     ImGui.closeCurrentPopup();
                 }
                 else {
@@ -53,11 +49,16 @@ public class NameInputModal {
             ImGui.sameLine();
 
             if (ImGui.button("Cancel")) {
-                input.clear();
+                resetData();
                 ImGui.closeCurrentPopup();
             }
 
             ImGui.endPopup();
         }
+    }
+
+    private void resetData() {
+        hasEmptyNameError = false;
+        input.clear();
     }
 }

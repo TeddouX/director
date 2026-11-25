@@ -3,10 +3,10 @@ package teddy.director.client.data.track;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
-import imgui.type.ImFloat;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import teddy.director.client.DirectorState;
+import teddy.director.client.screen.window.timeline.TimelineWindow;
 import teddy.director.client.utils.Vec3Input;
 
 public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
@@ -103,12 +103,17 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
 
         @Override
         protected void drawImGuiWindowContents() {
+            ImGui.separatorText("Edit camera position");
+
             posInput.draw(newPos -> pos = newPos);
-            ImGui.sliderFloat("Yaw", yawInputVal, -180f, 180f);
-            ImGui.sliderFloat("Pitch", pitchInputVal, -180f, 180f);
+            ImGui.dragFloat("Yaw", yawInputVal, 0.2f, -180f, 180f);
+            ImGui.dragFloat("Pitch", pitchInputVal, 0.1f, -90f, 90f);
 
             yaw = yawInputVal[0];
-            pitch = pitchInputVal[0];
+            // -90 is up for some reason
+            pitch = -pitchInputVal[0];
+
+            track.update(TimelineWindow.playhead.getMs());
         }
     }
 }

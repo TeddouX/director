@@ -9,8 +9,6 @@ import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
 import teddy.director.client.DirectorState;
 import teddy.director.client.rendering.RenderCamera;
-import teddy.director.client.utils.ConfirmModal;
-import teddy.director.client.utils.NameInputModal;
 
 public class CameraControl {
     private final ImBoolean camPreviewWinOpen = new ImBoolean(false);
@@ -27,11 +25,6 @@ public class CameraControl {
 
     public void draw() {
         ImGui.separatorText("Camera");
-
-        if (ImGui.button("Create associated timeline")) {
-            int idx = DirectorState.createAndAddTimeline("Main Camera");
-            DirectorState.setCurrentTimeline(idx);
-        }
 
         if (ImGui.button("Open preview"))
             camPreviewWinOpen.set(true);

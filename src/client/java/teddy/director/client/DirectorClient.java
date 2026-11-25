@@ -61,7 +61,7 @@ public class DirectorClient implements ClientModInitializer {
 				DirectorState.isActive = isSinglePlayer;
 
 				if (isSinglePlayer)
-					DirectorState.renderCamera = new RenderCamera(client);
+					DirectorState.renderCamera = new RenderCamera();
 			}
 		);
 

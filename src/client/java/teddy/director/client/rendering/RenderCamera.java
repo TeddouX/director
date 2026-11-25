@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 public class RenderCamera {
-    private static final double BB_HALF_SIZE = 2.0;
+    private static final double BB_HALF_SIZE = 0.5;
 
     private final RenderTarget renderTarget;
     public CameraData cameraData;
@@ -26,9 +26,11 @@ public class RenderCamera {
     public Vector4f fogColor = new Vector4f();
     public Vec3 pos = Vec3.ZERO;
     public float yaw, pitch;
+    public float fov = 70f;
+    public float aspect = 1920f/1080f;
 
-    public RenderCamera(Minecraft mc) {
-        this.renderTarget = new MainTarget(mc.getWindow().getWidth(), mc.getWindow().getHeight());;
+    public RenderCamera() {
+        this.renderTarget = new MainTarget(1920, 1080);
     }
 
     public void close() {
@@ -63,12 +65,12 @@ public class RenderCamera {
 
     public AABB getBoundingBox() {
         return new AABB(
-                this.pos.x - .5,
-                this.pos.y - .5,
-                this.pos.z - .5,
-                this.pos.x + .5,
-                this.pos.y + .5,
-                this.pos.z + .5
+                this.pos.x - BB_HALF_SIZE,
+                this.pos.y - BB_HALF_SIZE,
+                this.pos.z - BB_HALF_SIZE,
+                this.pos.x + BB_HALF_SIZE,
+                this.pos.y + BB_HALF_SIZE,
+                this.pos.z + BB_HALF_SIZE
         );
     }
 
