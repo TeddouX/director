@@ -3,6 +3,9 @@ package teddy.director.client.screen.window.scene;
 import imgui.ImDrawList;
 import imgui.ImGui;
 import imgui.ImVec2;
+import imgui.extension.imguizmo.ImGuizmo;
+import imgui.extension.imguizmo.flag.Mode;
+import imgui.extension.imguizmo.flag.Operation;
 import imgui.flag.ImGuiMouseButton;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -66,6 +69,7 @@ public class SceneWindow {
 
             handleEntitySelection();
             handleCameraSelection();
+            drawGizmos();
         }
 
         ImGui.end();
@@ -279,7 +283,7 @@ public class SceneWindow {
     private static void drawLine3D(ImDrawList dl, Vec3 a, Vec3 b, int color, float thickness) {
         Minecraft mc = Minecraft.getInstance();
         Vec3 viewPos = Freecam.pos;
-        Vec3 look = Freecam.forwards();
+        Vec3 look = Freecam.forwards;
         float nearEps = 0.05f;
 
         double da = a.subtract(viewPos).dot(look);
@@ -302,5 +306,30 @@ public class SceneWindow {
                 (float) ((bScreen.x * 0.5 + 0.5) * size.x), (float) ((1.0 - (bScreen.y * 0.5 + 0.5)) * size.y),
                 color, thickness
         );
+    }
+
+    private static void drawGizmos() {
+        RenderCamera cam = DirectorState.renderCamera;
+        if (!Freecam.isInFront(cam.pos))
+            return;
+
+        float[] model = Freecam.getModelMat(cam.pos, cam.yaw, cam.pitch);
+        float[] proj = Freecam.projMat.get(new float[16]);
+        float[] view = Freecam.viewMat.get(new float[16]);
+
+        int op = Operation.ROTATE_X | Operation.ROTATE_Y | Operation.ROTATE_Z | Operation.TRANSLATE;
+        ImGuizmo.manipulate(view, proj, op, Mode.LOCAL, model);
+
+        if (ImGuizmo.isUsing()) {
+            Matrix4f m = new Matrix4f().set(model);
+
+            Vector3f t = m.getColumn(3, new Vector3f());
+
+            DirectorState.renderCamera.pos = new Vec3(t.x + Freecam.pos.x, t.y + Freecam.pos.y, t.z + Freecam.pos.z);
+
+            Vector3f f = m.getColumn(2, new Vector3f()).negate().normalize();
+            DirectorState.renderCamera.yaw   = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
+            DirectorState.renderCamera.pitch = (float) Math.toDegrees(Math.asin(Math.clamp(-f.y, -1, 1)));
+        }
     }
 }

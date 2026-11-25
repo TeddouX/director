@@ -1,11 +1,12 @@
 package teddy.director.client.data.track;
 
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import imgui.type.ImBoolean;
 import teddy.director.client.utils.Named;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,7 +34,10 @@ public abstract class AbstractTrack<T extends AbstractKeyframe> extends Named {
         this.uuid = UUID.fromString(obj.get("uuid").getAsString());
         this.name = obj.get("name").getAsString();
 
-        Type keyframesTy = new TypeToken<TreeMap<Long, T>>(){}.getType();
+        Type kfClass = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        Type keyframesTy = TypeToken
+                .getParameterized(TreeMap.class, Long.class, kfClass)
+                .getType();
 
         this.keyframes = gson.fromJson(obj.get("keyframes"), keyframesTy);
         for (T kf : keyframes.values())

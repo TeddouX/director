@@ -45,8 +45,10 @@ public abstract class CameraMixin implements CameraAccess {
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void director$captureProjMat(CameraRenderState cameraState, float cameraEntityPartialTicks, CallbackInfo ci) {
-        if (!DirectorState.renderingUsingRenderCam)
+        if (!DirectorState.renderingUsingRenderCam) {
             Freecam.projMat = cameraState.projectionMatrix;
+            Freecam.viewMat = cameraState.viewRotationMatrix;
+        }
     }
 
     @Override

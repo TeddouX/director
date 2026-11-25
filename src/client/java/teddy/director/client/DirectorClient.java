@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import foundry.imgui.fabric.api.event.ImGuiLoadEventsFabric;
 import foundry.imgui.fabric.api.event.RenderImGuiEventsFabric;
 import imgui.ImGui;
+import imgui.ImVec2;
+import imgui.extension.imguizmo.ImGuizmo;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.flag.ImGuiDockNodeFlags;
 import net.fabricmc.api.ClientModInitializer;
@@ -88,6 +90,15 @@ public class DirectorClient implements ClientModInitializer {
 
 	private void registerImGuiEvents() {
 		ImGuiLoadEventsFabric.POST.register(() -> ImGui.getIO().addConfigFlags(ImGuiConfigFlags.DockingEnable));
+
+		RenderImGuiEventsFabric.PRE.register(() -> {
+			ImVec2 size = ImGui.getIO().getDisplaySize();
+
+			ImGuizmo.beginFrame();
+			ImGuizmo.setOrthographic(false);
+			ImGuizmo.setDrawList(ImGui.getBackgroundDrawList());
+			ImGuizmo.setRect(0, 0, size.x, size.y);
+		});
 
 		RenderImGuiEventsFabric.POST.register(() -> {
 			ImGui.dockSpaceOverViewport(0, ImGui.getMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);

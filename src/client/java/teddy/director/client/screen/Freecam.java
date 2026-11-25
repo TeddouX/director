@@ -19,20 +19,13 @@ public class Freecam {
     public static Vec3 pos = Vec3.ZERO, prevPos = Vec3.ZERO;
     public static float yaw, pitch;
     public static Matrix4f projMat;
-    
+    public static Matrix4f viewMat;
+
+    public static Vec3 forwards;
+    public static Vec3 up;
+    public static Vec3 right;
+
     private static long lastNanos;
-
-    public static Vec3 forwards() {
-        float yawRads = (float) Math.toRadians(yaw);
-        float pitchRads = (float) Math.toRadians(pitch);
-        double cosPitch = Mth.cos(pitchRads);
-
-        return new Vec3(
-                -Mth.sin(yawRads) * cosPitch,
-                -Mth.sin(pitchRads),
-                Mth.cos(yawRads) * cosPitch
-        );
-    }
 
     public static void copyPlayerCam() {
         LocalPlayer player = Minecraft.getInstance().player;
@@ -42,6 +35,8 @@ public class Freecam {
         prevPos = pos = player.position();
         yaw = player.getYRot();
         pitch = player.getXRot();
+
+        recalculateVectors();
     }
 
     public static void toggle() {
@@ -84,20 +79,56 @@ public class Freecam {
             pos = pos.add(move.normalize().scale(speed * dtSec));
     }
 
-    public static void rotateWithSens(Minecraft mc, float yaw, float pitch) {
+    public static void rotateWithSens(Minecraft mc, float newYaw, float newPitch) {
         double ss = mc.options.sensitivity().get() * 0.3F + 0.2F;
         double sensitivityMod = ss * ss * ss;
         double sens = sensitivityMod * 8.0;
 
-        Freecam.yaw += (float)(yaw * sens);
+        yaw += (float)(newYaw * sens);
 
-        Freecam.pitch += (float)(pitch * sens);
-        Freecam.pitch = Math.clamp(Freecam.pitch, -90, 90);
+        pitch += (float)(newPitch * sens);
+        pitch = Math.clamp(pitch, -90, 90);
+
+        recalculateVectors();
     }
 
     public static void scrollWheel(double value) {
         speed += value;
         speed = Math.clamp(speed, 1, 100);
+    }
+
+    private static void recalculateVectors() {
+        forwards = forwardVec(yaw, pitch);
+        up = forwardVec(yaw, pitch - 90);
+        right = forwards.cross(up);
+    }
+
+    private static Vec3 forwardVec(float camYaw, float camPitch) {
+        float yawRads = (float) Math.toRadians(camYaw);
+        float pitchRads = (float) Math.toRadians(camPitch);
+        double cosPitch = Mth.cos(pitchRads);
+
+        return new Vec3(
+                -Mth.sin(yawRads) * cosPitch,
+                -Mth.sin(pitchRads),
+                Mth.cos(yawRads) * cosPitch
+        );
+    }
+
+    public static float[] getModelMat(Vec3 otherPos, float yaw, float pitch) {
+        return new Matrix4f()
+                .translation((float)(otherPos.x - pos.x),
+                        (float)(otherPos.y - pos.y),
+                        (float)(otherPos.z - pos.z))
+                .rotateY((float)(Mth.PI - Math.toRadians(yaw)))
+                .rotateX((float) -Math.toRadians(pitch))
+                .get(new float[16]);
+    }
+
+    public static boolean isInFront(Vec3 otherPos) {
+        Vec3 dPos = otherPos.subtract(pos);
+        double dot = dPos.dot(Freecam.forwards);
+        return dot > 0;
     }
 
     private static boolean down(Minecraft mc, KeyMapping mapping) {
