@@ -14,7 +14,7 @@ public class TimelinePlayhead {
     public static final float DRAGGABLE_AREA_HEIGHT = 15;
 
     private long playheadMs = 0;
-    private boolean isMovingPlayhead = false;
+    public boolean isMovingPlayhead = false;
 
     public TimelinePlayhead() {}
 
@@ -50,7 +50,7 @@ public class TimelinePlayhead {
         if (ScenePlaybackController.playbackRunning()) {
             playheadMs = ScenePlaybackController.playbackCurrMilli();
         }
-        else if (isMovingPlayhead || mouseIsInDraggableArea) {
+        else if (isMovingPlayhead || mouseIsInDraggableArea && !TimelineWindow.tracks.isMovingKf) {
             ImGui.setMouseCursor(ImGuiMouseCursor.ResizeEW);
 
             if (ImGui.isMouseDown(ImGuiMouseButton.Left)) {

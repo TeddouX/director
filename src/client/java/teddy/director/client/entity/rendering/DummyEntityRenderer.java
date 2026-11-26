@@ -57,8 +57,6 @@ public class DummyEntityRenderer extends EntityRenderer<DummyEntity, DummyEntity
         state.animState = entity.animationState;
 
         ((LivingEntityStateAccess) state.delegateState).director$setAnimState(entity.animationState);
-
-        // renderer.extractRenderState(target, state.delegateState, partialTicks);
     }
 
     @Override

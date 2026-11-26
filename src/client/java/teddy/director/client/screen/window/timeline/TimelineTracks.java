@@ -5,8 +5,8 @@ import imgui.ImGui;
 import imgui.ImVec2;
 import imgui.flag.ImGuiMouseButton;
 import teddy.director.client.DirectorState;
-import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.AbstractKeyframe;
+import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.utils.imgui.ConfirmModal;
 import teddy.director.client.utils.imgui.ImGuiColors;
 import teddy.director.client.utils.imgui.NameInputModal;
@@ -30,6 +30,7 @@ public class TimelineTracks {
     public int trackRightClickMenuIdx = -1;
     public int trackNameRightClickMenuIdx = -1;
     private AbstractKeyframe selectedKeyframe = null;
+    public boolean isMovingKf = false;
 
     public TimelineTracks() {}
 
@@ -129,10 +130,22 @@ public class TimelineTracks {
 
         trackY = windowOrigin.y + TimelinePlayhead.DRAGGABLE_AREA_HEIGHT;
         for (AbstractTrack<?> track : DirectorState.currentTimeline.tracks) {
+            long oldMs = -1;
+            long newMs = -1;
+
             for (AbstractKeyframe kf : track.getKeyframes().values()) {
-                drawKeyframe(kf, trackY, dl, windowOrigin, windowSize);
-                handleKeyframeSelectAndDrag();
+                float kfX = TimelineWindow.msToX(kf.ms);
+                drawKeyframe(kfX, trackY, dl, windowOrigin, windowSize);
+
+                long kfMs = handleKeyframeSelectAndDrag(kf, kfX, trackY, dl);
+                if (kfMs >= 0) {
+                    newMs = kfMs;
+                    oldMs = kf.ms;
+                }
             }
+
+            if (newMs >= 0)
+                track.moveKeyframe(oldMs, newMs);
 
             trackY += TRACK_HEIGHT;
         }
@@ -189,8 +202,7 @@ public class TimelineTracks {
         }
     }
 
-    private void drawKeyframe(AbstractKeyframe kf, float trackY, ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
-        float kfX = TimelineWindow.msToX(kf.ms);
+    private void drawKeyframe(float kfX, float trackY, ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {
         if (kfX <= startPosX || kfX > windowOrigin.x + windowSize.x)
             return;
 
@@ -204,8 +216,37 @@ public class TimelineTracks {
         );
     }
 
-    private void handleKeyframeSelectAndDrag() {
+    private long handleKeyframeSelectAndDrag(AbstractKeyframe kf, float kfX, float trackY, ImDrawList dl) {
+        boolean isMouseOverKf = TimelineWindow.mouseIsInRect(
+                kfX, trackY,
+                kfX + 2 * KEYFRAME_HALF_HEIGHT, trackY + TRACK_HEIGHT
+        );
 
+        if (isMovingKf && !ImGui.isMouseDown(ImGuiMouseButton.Left))
+            isMovingKf = false;
+
+        if (isMouseOverKf && ImGui.isMouseDown(ImGuiMouseButton.Left) && !isMovingKf && !TimelineWindow.playhead.isMovingPlayhead) {
+            selectedKeyframe = kf;
+            isMovingKf = true;
+        }
+
+        if (isMovingKf && selectedKeyframe == kf) {
+            long newMs = TimelineWindow.xToMs(TimelineWindow.mousePos.x);
+
+            float trackMiddle = trackY + TRACK_HEIGHT / 2;
+            dl.addQuad(
+                    kfX, trackMiddle - KEYFRAME_HALF_HEIGHT,   // top
+                    kfX + KEYFRAME_HALF_WIDTH, trackMiddle,    // right
+                    kfX, trackMiddle + KEYFRAME_HALF_HEIGHT,   // bottom
+                    kfX - KEYFRAME_HALF_WIDTH, trackMiddle,    // left
+                    ImGuiColors.BB_SELECTED,
+                    1f
+            );
+
+            return newMs;
+        }
+
+        return -1;
     }
 
     private void drawMillis(ImDrawList dl, ImVec2 windowOrigin, ImVec2 windowSize) {

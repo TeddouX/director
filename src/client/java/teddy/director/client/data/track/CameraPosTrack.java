@@ -3,7 +3,6 @@ package teddy.director.client.data.track;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
-import imgui.extension.imguizmo.flag.Operation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -96,6 +95,8 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
         public Vec3 pos = Vec3.ZERO;
         public float yaw, pitch;
 
+        public Keyframe() { super(); }
+
         public Keyframe(long ms) {
             super(ms);
         }
@@ -127,12 +128,10 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
             if (!Freecam.isInFront(pos))
                 return;
 
-            int op = Operation.ROTATE_X | Operation.ROTATE_Y | Operation.TRANSLATE;
             Matrix4f newModel = ImGuiRendering.drawRXRYTGizmos(
                     Freecam.viewMat.get(new float[16]),
                     Freecam.projMat.get(new float[16]),
-                    Freecam.getModelMat(pos, yaw, pitch),
-                    op
+                    Freecam.getModelMat(pos, yaw, pitch)
             );
 
             if (newModel == null)
@@ -144,7 +143,7 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
             pos = new Vec3(t.x + Freecam.pos.x, t.y + Freecam.pos.y, t.z + Freecam.pos.z);
 
             Vector3f f = newModel.getColumn(2, new Vector3f()).negate().normalize();
-            yaw = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
+            yaw = (float) Math.toDegrees(Mth.atan2(-f.x, f.z));
             pitch = (float) Math.toDegrees(Math.asin(Math.clamp(-f.y, -1, 1)));
 
             updateInputs();

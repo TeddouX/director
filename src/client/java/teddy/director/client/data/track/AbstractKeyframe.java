@@ -4,10 +4,12 @@ import imgui.ImGui;
 import imgui.type.ImBoolean;
 
 public abstract class AbstractKeyframe {
-    protected transient AbstractTrack track;
+    protected transient AbstractTrack<?> track;
     public transient ImBoolean windowOpen = new ImBoolean(true);
 
-    public long ms;
+    public long ms = 0;
+
+    public AbstractKeyframe() {}
 
     public AbstractKeyframe(long ms) {
         this.ms = ms;
@@ -19,7 +21,7 @@ public abstract class AbstractKeyframe {
         this.windowOpen.set(true);
     }
 
-    public void setParentTrack(AbstractTrack track) {
+    public void setParentTrack(AbstractTrack<?> track) {
         this.track = track;
     }
 

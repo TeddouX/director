@@ -63,6 +63,12 @@ public abstract class AbstractTrack<T extends AbstractKeyframe> extends Named {
         T kf = getKeyframes().remove(fromMs);
         if (kf == null) return;
 
+        T toKf = getKeyframes().get(toMs);
+        if (toKf != null)
+            toMs = toMs > fromMs
+                    ? toMs + 1  // Moving from left to right
+                    : toMs - 1; // Moving from right to left
+
         kf.ms = toMs;
         getKeyframes().put(toMs, kf);
     }

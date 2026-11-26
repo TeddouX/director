@@ -110,7 +110,7 @@ public class ImGuiRendering {
     }
 
     @Nullable
-    public static Matrix4f drawRXRYTGizmos(float[] view, float[] proj, float[] model, int op) {
+    public static Matrix4f drawRXRYTGizmos(float[] view, float[] proj, float[] model) {
         ImGuizmo.setID(1);
         ImGuizmo.manipulate(view, proj, Operation.TRANSLATE | Operation.ROTATE_Y, Mode.WORLD, model);
         boolean usedA = ImGuizmo.isUsing();
