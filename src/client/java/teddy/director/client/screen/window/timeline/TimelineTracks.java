@@ -7,9 +7,9 @@ import imgui.flag.ImGuiMouseButton;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.AbstractTrack;
 import teddy.director.client.data.track.AbstractKeyframe;
-import teddy.director.client.utils.ConfirmModal;
-import teddy.director.client.utils.ImGuiColors;
-import teddy.director.client.utils.NameInputModal;
+import teddy.director.client.utils.imgui.ConfirmModal;
+import teddy.director.client.utils.imgui.ImGuiColors;
+import teddy.director.client.utils.imgui.NameInputModal;
 
 import java.util.List;
 

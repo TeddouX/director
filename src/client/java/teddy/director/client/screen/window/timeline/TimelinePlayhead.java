@@ -22,6 +22,10 @@ public class TimelinePlayhead {
         return playheadMs;
     }
 
+    public void setMs(long ms) {
+        playheadMs = ms;
+    }
+
     public void reset() {
         playheadMs = 0;
         isMovingPlayhead = false;

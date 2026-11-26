@@ -10,8 +10,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import teddy.director.client.DirectorState;
-import teddy.director.client.utils.FilteredCombo;
-import teddy.director.client.utils.ImGuiColors;
+import teddy.director.client.utils.imgui.FilteredCombo;
+import teddy.director.client.utils.imgui.ImGuiColors;
 
 public class CreateDummyPopup {
     private final FilteredCombo entityTypeCombo = new FilteredCombo("Display Entity", "Select a display entity...");

@@ -13,7 +13,7 @@ import teddy.director.client.data.DummyData;
 import teddy.director.client.entity.DummyEntity;
 import teddy.director.client.entity.rendering.ModelPartLookup;
 import teddy.director.client.playback.ScenePlaybackController;
-import teddy.director.client.utils.Vec3Input;
+import teddy.director.client.utils.imgui.Vec3Input;
 
 import java.lang.reflect.Type;
 import java.util.*;

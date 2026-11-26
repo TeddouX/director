@@ -10,8 +10,8 @@ import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.phys.Vec3;
 import teddy.director.client.data.DummyData;
 import teddy.director.client.playback.ScenePlaybackController;
-import teddy.director.client.utils.FilteredCombo;
-import teddy.director.client.utils.ImGuiColors;
+import teddy.director.client.utils.imgui.FilteredCombo;
+import teddy.director.client.utils.imgui.ImGuiColors;
 
 public class DummyEditWindow {
     private final FilteredCombo entityTypeCombo = new FilteredCombo("Display Entity", "Select a display entity...");

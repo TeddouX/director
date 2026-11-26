@@ -4,9 +4,9 @@ import imgui.ImGui;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.TimelineData;
 import teddy.director.client.screen.window.timeline.TimelineWindow;
-import teddy.director.client.utils.ConfirmModal;
-import teddy.director.client.utils.FilteredCombo;
-import teddy.director.client.utils.NameInputModal;
+import teddy.director.client.utils.imgui.ConfirmModal;
+import teddy.director.client.utils.imgui.FilteredCombo;
+import teddy.director.client.utils.imgui.NameInputModal;
 
 import java.util.List;
 

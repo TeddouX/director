@@ -1,15 +1,9 @@
 package teddy.director.client.screen.window.scene;
 
-import imgui.ImDrawList;
 import imgui.ImGui;
-import imgui.ImVec2;
-import imgui.extension.imguizmo.ImGuizmo;
-import imgui.extension.imguizmo.flag.Mode;
-import imgui.extension.imguizmo.flag.Operation;
 import imgui.flag.ImGuiMouseButton;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -23,7 +17,8 @@ import teddy.director.client.playback.ScenePlaybackController;
 import teddy.director.client.rendering.RenderCamera;
 import teddy.director.client.screen.Freecam;
 import teddy.director.client.screen.window.timeline.TimelineWindow;
-import teddy.director.client.utils.ImGuiColors;
+import teddy.director.client.utils.imgui.ImGuiColors;
+import teddy.director.client.utils.imgui.ImGuiRendering;
 
 import java.util.Optional;
 
@@ -69,7 +64,6 @@ public class SceneWindow {
 
             handleEntitySelection();
             handleCameraSelection();
-            drawGizmos();
         }
 
         ImGui.end();
@@ -107,12 +101,12 @@ public class SceneWindow {
 
         if (selectedDummy != null) {
             DummyEntity dummyEntity = ScenePlaybackController.getDummyEntity(selectedDummy.uuid);
-            drawBoundingBox(dummyEntity.getBoundingBox(), ImGuiColors.BB_SELECTED);
+            ImGuiRendering.drawBoundingBox(dummyEntity.getBoundingBox(), ImGuiColors.BB_SELECTED);
         }
 
         Entity hoveredEntity = getHoveredDummyEntity();
         if (hoveredEntity instanceof DummyEntity dummyEntity && !Freecam.active) {
-            drawBoundingBox(hoveredEntity.getBoundingBox(), ImGuiColors.BB_HOVERED);
+            ImGuiRendering.drawBoundingBox(hoveredEntity.getBoundingBox(), ImGuiColors.BB_HOVERED);
 
             if (ImGui.isMouseDown(ImGuiMouseButton.Left)) {
                 dummyEditWindow.open(dummyEntity.data);
@@ -149,7 +143,7 @@ public class SceneWindow {
         else
             color = ImGuiColors.WHITE;
 
-        drawBoundingBox(DirectorState.renderCamera.getBoundingBox(), color);
+        ImGuiRendering.drawBoundingBox(DirectorState.renderCamera.getBoundingBox(), color);
         drawRenderCamFrustum(color);
 
         boolean isMouseOverWindow = ImGui.getIO().getWantCaptureMouse();
@@ -219,117 +213,15 @@ public class SceneWindow {
         return start.add(worldDir.scale(reach));
     }
 
-    private static void drawBoundingBox(AABB bb, int color) {
-        Vec3[] c = new Vec3[8];
-        for (int i = 0; i < 8; i++) {
-            c[i] = new Vec3(
-                    (i & 0b001) == 0 ? bb.minX : bb.maxX,
-                    (i & 0b010) == 0 ? bb.minY : bb.maxY,
-                    (i & 0b100) == 0 ? bb.minZ : bb.maxZ
-            );
-        }
-
-        ImDrawList dl = ImGui.getBackgroundDrawList();
-        for (int[] e : CUBE_EDGES)
-            drawLine3D(dl, c[e[0]], c[e[1]], color, 1.5f);
-    }
-
     private static void drawRenderCamFrustum(int color) {
-        RenderCamera renderCam = DirectorState.renderCamera;
-        Vec3 camPos = renderCam.pos;
-        float yaw = renderCam.yaw;
-        float pitch = renderCam.pitch;
-        float fovDeg = renderCam.fov;
-        float aspect = renderCam.aspect;
-        float near = .5f;
-        float far = 10f;
-        float yawRads = (float) Math.toRadians(yaw);
-        float pitchRads = (float) Math.toRadians(pitch);
-
-        Vec3 look = new Vec3(
-                -Mth.sin(yawRads) * Mth.cos(pitchRads),
-                -Mth.sin(pitchRads),
-                Mth.cos(yawRads) * Mth.cos(pitchRads)
-        );
-
-        Vec3 up = new Vec3(
-                -Mth.sin(yawRads) * Mth.sin(pitchRads),
-                Mth.cos(pitchRads),
-                Mth.cos(yawRads) * Mth.sin(pitchRads)
-        );
-
-        Vec3 right = look.cross(up);
-
-        double tanHalf = Math.tan(Math.toRadians(fovDeg) * 0.5);
-
-        Vec3[] c = new Vec3[8];
-        for (int i = 0; i < 8; i++) {
-            double d = (i & 4) == 0 ? near : far;
-            double hh = tanHalf * d;
-            double hw = hh * aspect;
-            double sx = (i & 1) == 0 ? -1 : 1;
-            double sy = (i & 2) == 0 ? -1 : 1;
-            c[i] = camPos
-                    .add(look.scale(d))
-                    .add(right.scale(sx * hw))
-                    .add(up.scale(sy * hh));
-        }
-
-        ImDrawList dl = ImGui.getBackgroundDrawList();
-        for (int[] e : CUBE_EDGES)
-            drawLine3D(dl, c[e[0]], c[e[1]], color, 1.5f);
-    }
-
-    private static void drawLine3D(ImDrawList dl, Vec3 a, Vec3 b, int color, float thickness) {
-        Minecraft mc = Minecraft.getInstance();
-        Vec3 viewPos = Freecam.pos;
-        Vec3 look = Freecam.forwards;
-        float nearEps = 0.05f;
-
-        double da = a.subtract(viewPos).dot(look);
-        double db = b.subtract(viewPos).dot(look);
-
-        if (da < nearEps && db < nearEps)
-            return;
-
-        if (da < nearEps)
-            a = a.add(b.subtract(a).scale((nearEps - da) / (db - da)));
-        else if (db < nearEps)
-            b = b.add(a.subtract(b).scale((nearEps - db) / (da - db)));
-
-        ImVec2 size = ImGui.getIO().getDisplaySize();
-        Vec3 aScreen = mc.gameRenderer.projectPointToScreen(a);
-        Vec3 bScreen = mc.gameRenderer.projectPointToScreen(b);
-
-        dl.addLine(
-                (float) ((aScreen.x * 0.5 + 0.5) * size.x), (float) ((1.0 - (aScreen.y * 0.5 + 0.5)) * size.y),
-                (float) ((bScreen.x * 0.5 + 0.5) * size.x), (float) ((1.0 - (bScreen.y * 0.5 + 0.5)) * size.y),
-                color, thickness
-        );
-    }
-
-    private static void drawGizmos() {
         RenderCamera cam = DirectorState.renderCamera;
-        if (!Freecam.isInFront(cam.pos))
-            return;
-
-        float[] model = Freecam.getModelMat(cam.pos, cam.yaw, cam.pitch);
-        float[] proj = Freecam.projMat.get(new float[16]);
-        float[] view = Freecam.viewMat.get(new float[16]);
-
-        int op = Operation.ROTATE_X | Operation.ROTATE_Y | Operation.ROTATE_Z | Operation.TRANSLATE;
-        ImGuizmo.manipulate(view, proj, op, Mode.LOCAL, model);
-
-        if (ImGuizmo.isUsing()) {
-            Matrix4f m = new Matrix4f().set(model);
-
-            Vector3f t = m.getColumn(3, new Vector3f());
-
-            DirectorState.renderCamera.pos = new Vec3(t.x + Freecam.pos.x, t.y + Freecam.pos.y, t.z + Freecam.pos.z);
-
-            Vector3f f = m.getColumn(2, new Vector3f()).negate().normalize();
-            DirectorState.renderCamera.yaw   = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
-            DirectorState.renderCamera.pitch = (float) Math.toDegrees(Math.asin(Math.clamp(-f.y, -1, 1)));
-        }
+        ImGuiRendering.drawFrustum(
+                cam.pos,
+                cam.yaw, cam.pitch,
+                cam.fov,
+                cam.aspect,
+                1f, 10f,
+                color
+        );
     }
 }

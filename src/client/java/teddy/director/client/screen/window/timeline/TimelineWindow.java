@@ -6,7 +6,7 @@ import imgui.type.ImString;
 import teddy.director.client.DirectorState;
 import teddy.director.client.data.track.TrackRegistry;
 import teddy.director.client.playback.ScenePlaybackController;
-import teddy.director.client.utils.ImGuiColors;
+import teddy.director.client.utils.imgui.ImGuiColors;
 
 import java.util.List;
 

@@ -6,9 +6,9 @@ import teddy.director.client.DirectorState;
 import teddy.director.client.data.MovieData;
 import teddy.director.client.data.SceneData;
 import teddy.director.client.screen.window.scene.SceneWindow;
-import teddy.director.client.utils.ConfirmModal;
-import teddy.director.client.utils.FilteredCombo;
-import teddy.director.client.utils.NameInputModal;
+import teddy.director.client.utils.imgui.ConfirmModal;
+import teddy.director.client.utils.imgui.FilteredCombo;
+import teddy.director.client.utils.imgui.NameInputModal;
 
 import java.io.IOException;
 import java.util.List;

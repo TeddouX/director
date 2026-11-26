@@ -1,4 +1,4 @@
-package teddy.director.client.utils;
+package teddy.director.client.utils.imgui;
 
 import imgui.ImGui;
 import imgui.ImVec2;

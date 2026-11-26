@@ -3,11 +3,16 @@ package teddy.director.client.data.track;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import imgui.ImGui;
+import imgui.extension.imguizmo.flag.Operation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import teddy.director.client.DirectorState;
+import teddy.director.client.screen.Freecam;
 import teddy.director.client.screen.window.timeline.TimelineWindow;
-import teddy.director.client.utils.Vec3Input;
+import teddy.director.client.utils.imgui.ImGuiRendering;
+import teddy.director.client.utils.imgui.Vec3Input;
 
 public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
     public static final String TYPE_ID = "camera_pos";
@@ -98,7 +103,7 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
         public void updateInputs() {
             posInput.setValue(pos);
             yawInputVal[0] = yaw;
-            pitchInputVal[0] = pitch;
+            pitchInputVal[0] = -pitch;
         }
 
         @Override
@@ -113,7 +118,36 @@ public class CameraPosTrack extends AbstractTrack<CameraPosTrack.Keyframe> {
             // -90 is up for some reason
             pitch = -pitchInputVal[0];
 
+            drawGizmos();
+
             track.update(TimelineWindow.playhead.getMs());
+        }
+
+        private void drawGizmos() {
+            if (!Freecam.isInFront(pos))
+                return;
+
+            int op = Operation.ROTATE_X | Operation.ROTATE_Y | Operation.TRANSLATE;
+            Matrix4f newModel = ImGuiRendering.drawRXRYTGizmos(
+                    Freecam.viewMat.get(new float[16]),
+                    Freecam.projMat.get(new float[16]),
+                    Freecam.getModelMat(pos, yaw, pitch),
+                    op
+            );
+
+            if (newModel == null)
+                return;
+
+            TimelineWindow.playhead.setMs(ms);
+
+            Vector3f t = newModel.getColumn(3, new Vector3f());
+            pos = new Vec3(t.x + Freecam.pos.x, t.y + Freecam.pos.y, t.z + Freecam.pos.z);
+
+            Vector3f f = newModel.getColumn(2, new Vector3f()).negate().normalize();
+            yaw = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
+            pitch = (float) Math.toDegrees(Math.asin(Math.clamp(-f.y, -1, 1)));
+
+            updateInputs();
         }
     }
 }
